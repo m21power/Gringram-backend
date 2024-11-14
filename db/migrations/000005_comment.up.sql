@@ -1,0 +1,10 @@
+CREATE TABLE comment (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    content TEXT NOT NULL,
+    user_ID INT NOT NULL,
+    post_ID INT NOT NULL,
+    like_count INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_ID) REFERENCES user(id),
+    FOREIGN KEY (post_ID) REFERENCES post(id)
+);
