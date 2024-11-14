@@ -37,7 +37,7 @@ func (s *UserStore) GetUserByID(id int) (*domain.User, error) {
 	query := "SELECT * FROM user WHERE id=?"
 	row := s.db.QueryRow(query, id)
 	user := &domain.User{}
-	err := row.Scan(&user.ID, &user.Name, &user.Username, &user.Bio, &user.Password, &user.Email, &user.ProfileID, &user.CreatedAt)
+	err := row.Scan(&user.ID, &user.Name, &user.Username, &user.Bio, &user.Password, &user.Email, &user.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func (s *UserStore) GetUserByUsername(username string) (*domain.User, error) {
 	query := "SELECT * FROM user WHERE username=?"
 	row := s.db.QueryRow(query, username)
 	user := &domain.User{}
-	err := row.Scan(&user.ID, &user.Name, &user.Username, &user.Bio, &user.Password, &user.Email, &user.ProfileID, &user.CreatedAt)
+	err := row.Scan(&user.ID, &user.Name, &user.Username, &user.Bio, &user.Password, &user.Email, &user.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func (s *UserStore) GetUserByEmail(email string) (*domain.User, error) {
 	query := "SELECT * FROM user WHERE email=?"
 	row := s.db.QueryRow(query, email)
 	user := &domain.User{}
-	err := row.Scan(&user.ID, &user.Name, &user.Username, &user.Bio, &user.Password, &user.Email, &user.ProfileID, &user.CreatedAt)
+	err := row.Scan(&user.ID, &user.Name, &user.Username, &user.Bio, &user.Password, &user.Email, &user.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -68,8 +68,8 @@ func (s *UserStore) GetUserByEmail(email string) (*domain.User, error) {
 
 }
 func (s *UserStore) UpdateUser(user *domain.User) error {
-	query := "UPDATE user SET name=?,username=?,bio=?,password=?,email=?,profile_id=? WHERE id=?"
-	_, err := s.db.Exec(query, user.Name, user.Username, user.Bio, user.Password, user.Email, user.ProfileID, user.ID)
+	query := "UPDATE user SET name=?,username=?,bio=?,password=?,email=? WHERE id=?"
+	_, err := s.db.Exec(query, user.Name, user.Username, user.Bio, user.Password, user.Email, user.ID)
 	if err != nil {
 		return err
 	}

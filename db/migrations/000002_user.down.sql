@@ -1,4 +1,1 @@
-ALTER TABLE
-    user DROP FOREIGN KEY user_ibfk_1;
-
-DROP TABLE IF EXISTS user;
+DROP TABLE IF EXISTS `user`;

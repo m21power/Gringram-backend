@@ -1,13 +1,13 @@
 package domain
 
 type User struct {
-	ID        int    `json:"id" db:"id"`
-	Name      string `json:"name" db:"name"`
-	Username  string `json:"username" db:"username"`
-	Bio       string `json:"bio" db:"bio"`
-	Password  string `json:"password" db:"password"`
-	Email     string `json:"email" db:"email"`
-	ProfileID int    `json:"profile_id" db:"profile_id"`
+	ID       int    `json:"id" db:"id"`
+	Name     string `json:"name" db:"name"`
+	Username string `json:"username" db:"username"`
+	Bio      string `json:"bio" db:"bio"`
+	Password string `json:"password" db:"password"`
+	Email    string `json:"email" db:"email"`
+	// ProfileID int    `json:"profile_id" db:"profile_id"`
 	CreatedAt string `json:"created_at" db:"created_at"`
 }
 

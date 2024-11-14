@@ -5,7 +5,5 @@ CREATE TABLE user (
     bio TEXT,
     password VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
-    profile_ID INT,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (profile_ID) REFERENCES profile_image(id)
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
