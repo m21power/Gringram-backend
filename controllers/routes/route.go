@@ -29,7 +29,12 @@ func (r *Router) RegisterRoute() {
 	usecase := usecases.NewUserUsecase(userStore)
 	userHandler := handlers.NewUserHandler(usecase)
 
-	r.route.HandleFunc("/user", userHandler.CreateUser)
+	r.route.HandleFunc("/user", userHandler.CreateUser).Methods("POST")
+	r.route.HandleFunc("/user/{id}", userHandler.GetUserByID).Methods("GET")
+	r.route.HandleFunc("/email", userHandler.GetUserByEmail).Methods("GET")
+	r.route.HandleFunc("/username", userHandler.GetUserByUsername).Methods("GET")
+	r.route.HandleFunc("/user/{id}", userHandler.DeleteUser).Methods("DELETE")
+	r.route.HandleFunc("/user/{id}", userHandler.UpdateUser).Methods("PUT")
 
 }
 

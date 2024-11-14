@@ -2,8 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
+	auth "github.com/m21power/GrinGram/Auth"
 	"github.com/m21power/GrinGram/domain"
 	"github.com/m21power/GrinGram/types"
 	"github.com/m21power/GrinGram/usecases"
@@ -94,6 +96,12 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, err)
 		return
 	}
+	hashedPassword, err := auth.HashedPassword(userPayload.Password)
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+	userPayload.Password = hashedPassword
 	oldUser, err := h.usecase.GetUserByID(id)
 	if err != nil {
 		utils.WriteError(w, err)
@@ -125,12 +133,22 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateFunc(oldUser *domain.User, newUser *domain.User) *domain.User {
-	oldUser.Email = newUser.Email
-	oldUser.Name = newUser.Name
-	oldUser.Username = newUser.Username
-	oldUser.Password = newUser.Password
-	oldUser.Bio = newUser.Bio
-	oldUser.Email = newUser.Email
+	if newUser.Email != "" {
+		oldUser.Email = newUser.Email
+	}
+	if newUser.Name != "" {
+		oldUser.Name = newUser.Name
+	}
+	if newUser.Username != "" {
+		oldUser.Username = newUser.Username
+	}
+	if newUser.Username != "" {
+		oldUser.Password = newUser.Password
+	}
+	if newUser.Bio != "" {
+		log.Println(newUser.Bio)
+		oldUser.Bio = newUser.Bio
+	}
 	return oldUser
 
 }

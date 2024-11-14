@@ -4,7 +4,7 @@ startdocker: sdocker
 	systemctl --user start docker-desktop
 # staring from this till v4.17.0 it is docker command, after that it is to create migrate file u can see on their documentation
 startmigration:
-	docker run -it --rm --network host --volume "$(shell pwd)/db:/db" migrate/migrate:v4.17.0 create -ext sql -dir /db/migrations -seq end
+	docker run -it --rm --network host --volume "$(shell pwd)/db:/db" migrate/migrate:v4.17.0 create -ext sql -dir /db/migrations -seq bio_nullable
 # this is to create mysql container if doen't exist else it will start the container
 rundocker:
 	docker run --name gringram -p 3306:3306 -e MYSQL_ROOT_PASSWORD=abate -d mysql:9.1
