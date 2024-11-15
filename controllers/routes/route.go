@@ -26,8 +26,11 @@ func (r *Router) RegisterRoute() {
 		return
 	}
 	userStore := database.UserNewStore(db)
-	usecase := usecases.NewUserUsecase(userStore)
-	userHandler := handlers.NewUserHandler(usecase)
+	userUsecase := usecases.NewUserUsecase(userStore)
+	userHandler := handlers.NewUserHandler(userUsecase)
+	profileStore := database.NewProfileStore(db)
+	profileUsecase := usecases.NewProfileUsecase(profileStore)
+	profileHandler := handlers.NewProfileHandler(profileUsecase)
 
 	r.route.HandleFunc("/user", userHandler.CreateUser).Methods("POST")
 	r.route.HandleFunc("/user/{id}", userHandler.GetUserByID).Methods("GET")
@@ -35,6 +38,11 @@ func (r *Router) RegisterRoute() {
 	r.route.HandleFunc("/username", userHandler.GetUserByUsername).Methods("GET")
 	r.route.HandleFunc("/user/{id}", userHandler.DeleteUser).Methods("DELETE")
 	r.route.HandleFunc("/user/{id}", userHandler.UpdateUser).Methods("PUT")
+
+	r.route.HandleFunc("/user/image/{id}", profileHandler.CreateProfile).Methods("POST")
+	r.route.HandleFunc("/user/image/{id}", profileHandler.GetProfileByID).Methods("GET")
+	r.route.HandleFunc("/user/image", profileHandler.UpdateProfile).Methods("PUT")
+	r.route.HandleFunc("/user/image/{id}", profileHandler.DeleteProfile).Methods("DELETE")
 
 }
 

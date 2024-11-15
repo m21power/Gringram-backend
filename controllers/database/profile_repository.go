@@ -14,8 +14,8 @@ func NewProfileStore(db *sql.DB) *ProfileStore {
 	return &ProfileStore{db: db}
 }
 func (s *ProfileStore) CreateProfile(profile *domain.Profile) (*domain.Profile, error) {
-	query := "INSERT INTO profile_image (id,url,created_at) VALUES(?,?,?)"
-	res, err := s.db.Exec(query)
+	query := "INSERT INTO profile_image (user_id,url) VALUES(?,?)"
+	res, err := s.db.Exec(query, profile.User_ID, profile.ImageURL)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +31,7 @@ func (s *ProfileStore) GetProfileByID(id int) (*domain.Profile, error) {
 	query := "SELECT * FROM profile_image WHERE id=?"
 	row := s.db.QueryRow(query, id)
 	profile := &domain.Profile{}
-	err := row.Scan(&profile.ID, &profile.Url, &profile.CreatedAt)
+	err := row.Scan(&profile.ID, &profile.User_ID, &profile.ImageURL, &profile.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func (s *ProfileStore) GetProfileByID(id int) (*domain.Profile, error) {
 
 func (s *ProfileStore) UpdateProfile(profile *domain.Profile) error {
 	query := "UPDATE profile_image SET url=? WHERE id=?"
-	_, err := s.db.Exec(query, profile.Url, profile.ID)
+	_, err := s.db.Exec(query, profile.ImageURL, profile.ID)
 	if err != nil {
 		return err
 	}

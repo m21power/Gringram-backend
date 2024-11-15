@@ -7,11 +7,10 @@ type UserPayload struct {
 	Email    string `json:"email" db:"email"`
 }
 
-type ProfilePayload struct {
-	Url string `json:"url" db:"url"`
+type ImagePayload struct {
+	User_ID string `json:"user_id"`
+	// ImageData []byte `json:"-"`
 }
-
-type UpdateProfilePayload struct {
-	ID  int    `json:"id" db:"id"`
-	Url string `json:"url" db:"url"`
+type UpdatePayload struct {
+	ID int `json:"id"`
 }
