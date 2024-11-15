@@ -1,4 +1,0 @@
-ALTER TABLE
-    `user`
-MODIFY
-    COLUMN `bio` TEXT DEFAULT '' NOT NULL;
