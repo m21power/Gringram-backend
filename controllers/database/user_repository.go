@@ -36,10 +36,10 @@ func (s *UserStore) CreateUser(user *domain.User) (*domain.User, error) {
 }
 
 func (s *UserStore) GetUserByID(id int) (*domain.User, error) {
-	query := "SELECT id, name, username, COALESCE(bio, ''), password, email, created_at FROM user WHERE id=?"
+	query := "SELECT id, name, username, COALESCE(bio, ''), password, email, profile_image_url,created_at FROM user WHERE id=?"
 	row := s.db.QueryRow(query, id)
 	user := &domain.User{}
-	err := row.Scan(&user.ID, &user.Name, &user.Username, &user.Bio, &user.Password, &user.Email, &user.CreatedAt)
+	err := row.Scan(&user.ID, &user.Name, &user.Username, &user.Bio, &user.Password, &user.Email, &user.ProfileImageUrl, &user.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -47,10 +47,10 @@ func (s *UserStore) GetUserByID(id int) (*domain.User, error) {
 
 }
 func (s *UserStore) GetUserByUsername(username string) (*domain.User, error) {
-	query := "SELECT id, name, username, COALESCE(bio, ''), password, email, created_at FROM user WHERE username=?"
+	query := "SELECT id, name, username, COALESCE(bio, ''), password, email,profile_image_url, created_at FROM user WHERE username=?"
 	row := s.db.QueryRow(query, username)
 	user := &domain.User{}
-	err := row.Scan(&user.ID, &user.Name, &user.Username, &user.Bio, &user.Password, &user.Email, &user.CreatedAt)
+	err := row.Scan(&user.ID, &user.Name, &user.Username, &user.Bio, &user.Password, &user.Email, &user.ProfileImageUrl, &user.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -59,11 +59,11 @@ func (s *UserStore) GetUserByUsername(username string) (*domain.User, error) {
 }
 
 func (s *UserStore) GetUserByEmail(email string) (*domain.User, error) {
-	query := "SELECT id, name, username, COALESCE(bio, ''), password, email, created_at FROM user WHERE email=?"
+	query := "SELECT id, name, username, COALESCE(bio, ''), password, email, profile_image_url,created_at FROM user WHERE email=?"
 
 	row := s.db.QueryRow(query, email)
 	user := &domain.User{}
-	err := row.Scan(&user.ID, &user.Name, &user.Username, &user.Bio, &user.Password, &user.Email, &user.CreatedAt)
+	err := row.Scan(&user.ID, &user.Name, &user.Username, &user.Bio, &user.Password, &user.Email, &user.ProfileImageUrl, &user.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -72,8 +72,8 @@ func (s *UserStore) GetUserByEmail(email string) (*domain.User, error) {
 }
 func (s *UserStore) UpdateUser(user *domain.User) error {
 
-	query := "UPDATE user SET name=?,username=?,bio=?,password=?,email=? WHERE id=?"
-	_, err := s.db.Exec(query, user.Name, user.Username, user.Bio, user.Password, user.Email, user.ID)
+	query := "UPDATE user SET name=?,username=?,bio=?,password=?,email=?,profile_image_url=? WHERE id=?"
+	_, err := s.db.Exec(query, user.Name, user.Username, user.Bio, user.Password, user.Email, user.ProfileImageUrl, user.ID)
 	if err != nil {
 		return err
 	}
@@ -87,4 +87,24 @@ func (s *UserStore) DeleteUser(id int) error {
 		return err
 	}
 	return nil
+}
+
+func (s *UserStore) DeleteUserImage(id int) error {
+	query := "UPDATE user SET profile_image_url=? WHERE id=?"
+	_, err := s.db.Exec(query, "", id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *UserStore) GetProfileURL(id int) (string, error) {
+	query := "SELECT profile_image_url FROM user WHERE id=?"
+	row := s.db.QueryRow(query, id)
+	var profileImageUrl string
+	err := row.Scan(&profileImageUrl)
+	if err != nil {
+		return "", err
+	}
+	return profileImageUrl, nil
 }

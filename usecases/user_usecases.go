@@ -33,3 +33,9 @@ func (u *UserUsecase) UpdateUser(user *domain.User) error {
 func (u *UserUsecase) DeleteUser(id int) error {
 	return u.userRepository.DeleteUser(id)
 }
+func (u *UserUsecase) DeleteUserImage(id int) error {
+	return u.userRepository.DeleteUserImage(id)
+}
+func (u *UserUsecase) GetProfileURL(id int) (string, error) {
+	return u.userRepository.GetProfileURL(id)
+}

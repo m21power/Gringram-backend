@@ -20,4 +20,6 @@ type UserRepository interface {
 	GetUserByEmail(email string) (*User, error)
 	UpdateUser(user *User) error
 	DeleteUser(id int) error
+	DeleteUserImage(id int) error
+	GetProfileURL(id int) (string, error)
 }

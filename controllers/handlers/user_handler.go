@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
-	"log"
 	"net/http"
 
 	auth "github.com/m21power/GrinGram/Auth"
@@ -29,6 +27,10 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userPayload, err := utils.GetUserPayload(w, r)
+	if userPayload == nil {
+		utils.WriteJSON(w, http.StatusBadRequest, map[string]string{"message": "Payload empty"})
+		return
+	}
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -90,36 +92,54 @@ func (h *UserHandler) GetUserByUsername(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	var userPayload types.UserPayload
-	err := json.NewDecoder(r.Body).Decode(&userPayload)
-	if err != nil {
-		utils.WriteError(w, err)
-		return
-	}
 	id, err := utils.GetID(r)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
 	}
-	hashedPassword, err := auth.HashedPassword(userPayload.Password)
+	url, err := h.usecase.GetProfileURL(id)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
 	}
-	userPayload.Password = hashedPassword
+	// now we have to delete first from the cloud
+	err = utils.DeleteProfileFromCloud(r, url)
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+	url, err = utils.GetImageUrl(r)
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+	userpy, err := utils.GetUserPayload(w, r)
+	if userpy == nil {
+		userpy = &types.UserPayload{}
+	}
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+	if userpy.Password != "" {
+		userpy.Password, err = auth.HashedPassword(userpy.Password)
+		if err != nil {
+			utils.WriteError(w, err)
+			return
+		}
+	}
 	oldUser, err := h.usecase.GetUserByID(id)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
 	}
-	user := utils.PayloadToDomainUser(userPayload)
-	new := updateFunc(oldUser, user)
-	err = h.usecase.UpdateUser(new)
+	up := updateFunc(oldUser, *userpy, url)
+	err = h.usecase.UpdateUser(up)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
 	}
-	utils.WriteJSON(w, http.StatusOK, new)
+	utils.WriteJSON(w, http.StatusOK, up)
 
 }
 func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
@@ -137,7 +157,32 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func updateFunc(oldUser *domain.User, newUser *domain.User) *domain.User {
+func (h *UserHandler) DeleteUserImage(w http.ResponseWriter, r *http.Request) {
+	id, err := utils.GetID(r)
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+	url, err := h.usecase.GetProfileURL(id)
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+	// now we have to delete first from the cloud
+	err = utils.DeleteProfileFromCloud(r, url)
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+	err = h.usecase.DeleteUserImage(id)
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+	utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "Deleted successfully"})
+}
+
+func updateFunc(oldUser *domain.User, newUser types.UserPayload, image_url string) *domain.User {
 	if newUser.Email != "" {
 		oldUser.Email = newUser.Email
 	}
@@ -147,13 +192,16 @@ func updateFunc(oldUser *domain.User, newUser *domain.User) *domain.User {
 	if newUser.Username != "" {
 		oldUser.Username = newUser.Username
 	}
-	if newUser.Username != "" {
+	if newUser.Password != "" {
 		oldUser.Password = newUser.Password
 	}
 	if newUser.Bio != "" {
-		log.Println(newUser.Bio)
 		oldUser.Bio = newUser.Bio
 	}
+	if image_url != "" {
+		oldUser.ProfileImageUrl = image_url
+	}
+
 	return oldUser
 
 }

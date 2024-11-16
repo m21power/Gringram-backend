@@ -26,12 +26,13 @@ func WriteError(w http.ResponseWriter, err error) {
 }
 
 func PayloadToDomainUser(payload types.UserPayload) *domain.User {
-	var user domain.User
-	user.Name = payload.Name
-	user.Password = payload.Password
-	user.Email = payload.Email
-	user.Username = payload.Username
-	return &user
+	return &domain.User{
+		Name:     payload.Name,
+		Username: payload.Username,
+		Password: payload.Password,
+		Email:    payload.Email,
+		Bio:      payload.Bio,
+	}
 }
 
 func GetID(r *http.Request) (int, error) {

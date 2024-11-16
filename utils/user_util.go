@@ -17,7 +17,11 @@ func GetImageUrl(r *http.Request) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	if r.ContentLength == 0 {
+		return "", nil
+	}
 	// Parse form data, including file
+
 	err = r.ParseMultipartForm(10 << 20) // 10 MB limit
 	if err != nil {
 		return "", err
@@ -83,6 +87,9 @@ func ExtractPublicID(cloudinaryURL string) (string, error) {
 }
 
 func GetUserPayload(w http.ResponseWriter, r *http.Request) (*types.UserPayload, error) {
+	if r.ContentLength == 0 {
+		return nil, nil
+	}
 	// Parse the multipart form
 	err := r.ParseMultipartForm(10 << 20) // 10 MB max memory
 	if err != nil {
