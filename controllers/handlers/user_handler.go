@@ -23,13 +23,17 @@ func NewUserHandler(usecase *usecases.UserUsecase) *UserHandler {
 }
 
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
-	var userPayload types.UserPayload
-	err := json.NewDecoder(r.Body).Decode(&userPayload)
+	url, err := utils.GetImageUrl(r)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
 	}
-	user := utils.PayloadToDomainUser(userPayload)
+	userPayload, err := utils.GetUserPayload(w, r)
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+	user := &domain.User{Name: userPayload.Name, Username: userPayload.Username, Email: userPayload.Email, Password: userPayload.Password, Bio: userPayload.Bio, ProfileImageUrl: url}
 	cu, err := h.usecase.CreateUser(user)
 	if err != nil {
 		utils.WriteError(w, err)
@@ -84,6 +88,7 @@ func (h *UserHandler) GetUserByUsername(w http.ResponseWriter, r *http.Request) 
 	utils.WriteJSON(w, http.StatusOK, u)
 
 }
+
 func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	var userPayload types.UserPayload
 	err := json.NewDecoder(r.Body).Decode(&userPayload)

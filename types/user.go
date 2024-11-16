@@ -5,12 +5,6 @@ type UserPayload struct {
 	Username string `json:"username" db:"username"`
 	Password string `json:"password" db:"password"`
 	Email    string `json:"email" db:"email"`
-}
-
-type ImagePayload struct {
-	User_ID string `json:"user_id"`
-	// ImageData []byte `json:"-"`
-}
-type UpdatePayload struct {
-	ID int `json:"id"`
+	Bio      string `json:"bio" db:"bio"`
+	// ProfileImageUrl string `json:"image_url" db:"profile_image_url"`
 }

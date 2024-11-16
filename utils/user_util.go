@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -8,6 +9,7 @@ import (
 	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/cloudinary/cloudinary-go/v2/api/admin"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
+	"github.com/m21power/GrinGram/types"
 )
 
 func GetImageUrl(r *http.Request) (string, error) {
@@ -22,6 +24,9 @@ func GetImageUrl(r *http.Request) (string, error) {
 	}
 	// Get the file from the form data
 	file, _, err := r.FormFile("image") // "image" is the key in the form
+	if file == nil {
+		return "", nil
+	}
 	if err != nil {
 		return "", err
 	}
@@ -75,4 +80,26 @@ func ExtractPublicID(cloudinaryURL string) (string, error) {
 	publicID := "images/" + strings.Split(publicIDWithExtension, ".")[0] // Remove the file extension
 
 	return publicID, nil
+}
+
+func GetUserPayload(w http.ResponseWriter, r *http.Request) (*types.UserPayload, error) {
+	// Parse the multipart form
+	err := r.ParseMultipartForm(10 << 20) // 10 MB max memory
+	if err != nil {
+		return nil, err
+	}
+
+	// Access the `data` part
+	jsonData := r.FormValue("data") // Retrieve the `data` field from the form
+	if jsonData == "" {
+		return nil, err
+	}
+
+	// Unmarshal JSON into the struct
+	var userPayload types.UserPayload
+	err = json.Unmarshal([]byte(jsonData), &userPayload)
+	if err != nil {
+		return nil, err
+	}
+	return &userPayload, nil
 }

@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"time"
 
 	auth "github.com/m21power/GrinGram/Auth"
 	"github.com/m21power/GrinGram/domain"
@@ -16,12 +17,12 @@ func UserNewStore(db *sql.DB) *UserStore {
 }
 
 func (s *UserStore) CreateUser(user *domain.User) (*domain.User, error) {
-	query := "INSERT INTO user(name,username,password,email) VALUES(?,?,?,?)"
+	query := "INSERT INTO user(name,username,email,password,bio,profile_image_url) VALUES(?,?,?,?,?,?)"
 	hashedPassword, err := auth.HashedPassword(user.Password)
 	if err != nil {
 		return nil, err
 	}
-	res, err := s.db.Exec(query, user.Name, user.Username, hashedPassword, user.Email)
+	res, err := s.db.Exec(query, user.Name, user.Username, user.Email, hashedPassword, user.Bio, user.ProfileImageUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -30,6 +31,7 @@ func (s *UserStore) CreateUser(user *domain.User) (*domain.User, error) {
 		return nil, err
 	}
 	user.ID = int(id)
+	user.CreatedAt = time.Now()
 	return user, nil
 }
 
