@@ -21,6 +21,7 @@ func NewUserHandler(usecase *usecases.UserUsecase) *UserHandler {
 }
 
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	url, err := utils.GetImageUrl(r)
 	if err != nil {
 		utils.WriteError(w, err)
@@ -36,7 +37,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user := &domain.User{Name: userPayload.Name, Username: userPayload.Username, Email: userPayload.Email, Password: userPayload.Password, Bio: userPayload.Bio, ProfileImageUrl: url}
-	cu, err := h.usecase.CreateUser(user)
+	cu, err := h.usecase.CreateUser(ctx, user)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -44,12 +45,13 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusCreated, cu)
 }
 func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	id, err := utils.GetID(r)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
 	}
-	u, err := h.usecase.GetUserByID(id)
+	u, err := h.usecase.GetUserByID(ctx, id)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -59,13 +61,14 @@ func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) GetUserByEmail(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	email := r.URL.Query().Get("email")
 	if email == "" {
 		utils.WriteError(w, nil)
 		return
 
 	}
-	u, err := h.usecase.GetUserByEmail(email)
+	u, err := h.usecase.GetUserByEmail(ctx, email)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -75,13 +78,14 @@ func (h *UserHandler) GetUserByEmail(w http.ResponseWriter, r *http.Request) {
 
 }
 func (h *UserHandler) GetUserByUsername(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	username := r.URL.Query().Get("username")
 	if username == "" {
 		utils.WriteError(w, nil)
 		return
 
 	}
-	u, err := h.usecase.GetUserByUsername(username)
+	u, err := h.usecase.GetUserByUsername(ctx, username)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -92,16 +96,29 @@ func (h *UserHandler) GetUserByUsername(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	tx, err := h.usecase.BeginTransaction(ctx)
+	defer func() { // this function runs at the end of the function before it returns, then before return it checks the value of err
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+		}
+	}()
 	id, err := utils.GetID(r)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
 	}
-	url, err := h.usecase.GetProfileURL(id)
+	url, err := h.usecase.GetProfileURL(ctx, tx, id)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
 	}
+
 	// now we have to delete first from the cloud
 	err = utils.DeleteProfileFromCloud(r, url)
 	if err != nil {
@@ -128,13 +145,13 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	oldUser, err := h.usecase.GetUserByID(id)
+	oldUser, err := h.usecase.GetUserByID(ctx, id)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
 	}
 	up := updateFunc(oldUser, *userpy, url)
-	err = h.usecase.UpdateUser(up)
+	err = h.usecase.UpdateUser(ctx, up)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -143,12 +160,13 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 }
 func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	id, err := utils.GetID(r)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
 	}
-	err = h.usecase.DeleteUser(id)
+	err = h.usecase.DeleteUser(ctx, id)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -158,12 +176,24 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) DeleteUserImage(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	tx, err := h.usecase.BeginTransaction(ctx)
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+		}
+	}()
 	id, err := utils.GetID(r)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
 	}
-	url, err := h.usecase.GetProfileURL(id)
+	url, err := h.usecase.GetProfileURL(ctx, tx, id)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -174,7 +204,7 @@ func (h *UserHandler) DeleteUserImage(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, err)
 		return
 	}
-	err = h.usecase.DeleteUserImage(id)
+	err = h.usecase.DeleteUserImage(ctx, tx, id)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

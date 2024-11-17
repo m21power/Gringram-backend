@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"database/sql"
 	"time"
 
@@ -16,13 +17,13 @@ func UserNewStore(db *sql.DB) *UserStore {
 	return &UserStore{db: db}
 }
 
-func (s *UserStore) CreateUser(user *domain.User) (*domain.User, error) {
+func (s *UserStore) CreateUser(ctx context.Context, user *domain.User) (*domain.User, error) {
 	query := "INSERT INTO user(name,username,email,password,bio,profile_image_url) VALUES(?,?,?,?,?,?)"
 	hashedPassword, err := auth.HashedPassword(user.Password)
 	if err != nil {
 		return nil, err
 	}
-	res, err := s.db.Exec(query, user.Name, user.Username, user.Email, hashedPassword, user.Bio, user.ProfileImageUrl)
+	res, err := s.db.ExecContext(ctx, query, user.Name, user.Username, user.Email, hashedPassword, user.Bio, user.ProfileImageUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -35,9 +36,9 @@ func (s *UserStore) CreateUser(user *domain.User) (*domain.User, error) {
 	return user, nil
 }
 
-func (s *UserStore) GetUserByID(id int) (*domain.User, error) {
+func (s *UserStore) GetUserByID(ctx context.Context, id int) (*domain.User, error) {
 	query := "SELECT id, name, username, COALESCE(bio, ''), password, email, profile_image_url,created_at FROM user WHERE id=?"
-	row := s.db.QueryRow(query, id)
+	row := s.db.QueryRowContext(ctx, query, id)
 	user := &domain.User{}
 	err := row.Scan(&user.ID, &user.Name, &user.Username, &user.Bio, &user.Password, &user.Email, &user.ProfileImageUrl, &user.CreatedAt)
 	if err != nil {
@@ -46,9 +47,9 @@ func (s *UserStore) GetUserByID(id int) (*domain.User, error) {
 	return user, nil
 
 }
-func (s *UserStore) GetUserByUsername(username string) (*domain.User, error) {
+func (s *UserStore) GetUserByUsername(ctx context.Context, username string) (*domain.User, error) {
 	query := "SELECT id, name, username, COALESCE(bio, ''), password, email,profile_image_url, created_at FROM user WHERE username=?"
-	row := s.db.QueryRow(query, username)
+	row := s.db.QueryRowContext(ctx, query, username)
 	user := &domain.User{}
 	err := row.Scan(&user.ID, &user.Name, &user.Username, &user.Bio, &user.Password, &user.Email, &user.ProfileImageUrl, &user.CreatedAt)
 	if err != nil {
@@ -58,10 +59,10 @@ func (s *UserStore) GetUserByUsername(username string) (*domain.User, error) {
 
 }
 
-func (s *UserStore) GetUserByEmail(email string) (*domain.User, error) {
+func (s *UserStore) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {
 	query := "SELECT id, name, username, COALESCE(bio, ''), password, email, profile_image_url,created_at FROM user WHERE email=?"
 
-	row := s.db.QueryRow(query, email)
+	row := s.db.QueryRowContext(ctx, query, email)
 	user := &domain.User{}
 	err := row.Scan(&user.ID, &user.Name, &user.Username, &user.Bio, &user.Password, &user.Email, &user.ProfileImageUrl, &user.CreatedAt)
 	if err != nil {
@@ -70,41 +71,42 @@ func (s *UserStore) GetUserByEmail(email string) (*domain.User, error) {
 	return user, nil
 
 }
-func (s *UserStore) UpdateUser(user *domain.User) error {
-
+func (s *UserStore) UpdateUser(ctx context.Context, user *domain.User) error {
 	query := "UPDATE user SET name=?,username=?,bio=?,password=?,email=?,profile_image_url=? WHERE id=?"
-	_, err := s.db.Exec(query, user.Name, user.Username, user.Bio, user.Password, user.Email, user.ProfileImageUrl, user.ID)
+	_, err := s.db.ExecContext(ctx, query, user.Name, user.Username, user.Bio, user.Password, user.Email, user.ProfileImageUrl, user.ID)
 	if err != nil {
 		return err
 	}
 	return nil
 
 }
-func (s *UserStore) DeleteUser(id int) error {
+func (s *UserStore) DeleteUser(ctx context.Context, id int) error {
 	query := "DELETE FROM user WHERE id=?"
-	_, err := s.db.Exec(query, id)
+	_, err := s.db.ExecContext(ctx, query, id)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *UserStore) DeleteUserImage(id int) error {
+func (s *UserStore) DeleteUserImage(ctx context.Context, tx *sql.Tx, id int) error {
 	query := "UPDATE user SET profile_image_url=? WHERE id=?"
-	_, err := s.db.Exec(query, "", id)
+	_, err := tx.ExecContext(ctx, query, "", id)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *UserStore) GetProfileURL(id int) (string, error) {
+func (s *UserStore) GetProfileURL(ctx context.Context, tx *sql.Tx, id int) (string, error) {
 	query := "SELECT profile_image_url FROM user WHERE id=?"
-	row := s.db.QueryRow(query, id)
-	var profileImageUrl string
-	err := row.Scan(&profileImageUrl)
+	var url string
+	err := tx.QueryRowContext(ctx, query, id).Scan(&url)
 	if err != nil {
 		return "", err
 	}
-	return profileImageUrl, nil
+	return url, nil
+}
+func (s *UserStore) BeginTransaction(ctx context.Context) (*sql.Tx, error) {
+	return s.db.BeginTx(ctx, nil)
 }

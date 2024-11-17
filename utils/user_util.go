@@ -49,6 +49,9 @@ func GetImageUrl(r *http.Request) (string, error) {
 }
 
 func DeleteProfileFromCloud(r *http.Request, link string) error {
+	if link == "" {
+		return nil
+	}
 	cld, err := cloudinary.NewFromParams("dl6vahv6t", "639632577282947", "_qyu3umAppkfaRNR84QUuWiIa7U")
 	if err != nil {
 		return err

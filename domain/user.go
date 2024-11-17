@@ -1,6 +1,10 @@
 package domain
 
-import "time"
+import (
+	"context"
+	"database/sql"
+	"time"
+)
 
 type User struct {
 	ID              int       `json:"id" db:"id"`
@@ -14,12 +18,13 @@ type User struct {
 }
 
 type UserRepository interface {
-	CreateUser(user *User) (*User, error)
-	GetUserByID(id int) (*User, error)
-	GetUserByUsername(username string) (*User, error)
-	GetUserByEmail(email string) (*User, error)
-	UpdateUser(user *User) error
-	DeleteUser(id int) error
-	DeleteUserImage(id int) error
-	GetProfileURL(id int) (string, error)
+	CreateUser(ctx context.Context, user *User) (*User, error)
+	GetUserByID(ctx context.Context, id int) (*User, error)
+	GetUserByUsername(ctx context.Context, username string) (*User, error)
+	GetUserByEmail(ctx context.Context, email string) (*User, error)
+	UpdateUser(ctx context.Context, user *User) error
+	DeleteUser(ctx context.Context, id int) error
+	DeleteUserImage(ctx context.Context, tx *sql.Tx, id int) error
+	GetProfileURL(ctx context.Context, tx *sql.Tx, id int) (string, error)
+	BeginTransaction(ctx context.Context) (*sql.Tx, error)
 }
