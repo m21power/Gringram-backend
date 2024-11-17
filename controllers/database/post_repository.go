@@ -39,9 +39,9 @@ func (s *PostStore) UpdatePost(ctx context.Context, post *domain.Post) error {
 
 }
 
-func (s *PostStore) DeletePost(ctx context.Context, id int) error {
+func (s *PostStore) DeletePost(ctx context.Context, tx *sql.Tx, id int) error {
 	query := "DELETE FROM post WHERE id=?"
-	_, err := s.db.ExecContext(ctx, query, id)
+	_, err := tx.ExecContext(ctx, query, id)
 	if err != nil {
 		return err
 	}
@@ -110,6 +110,28 @@ func (s *PostStore) GetPostImageByID(ctx context.Context, id int) (*domain.PostI
 		return nil, err
 	}
 	return &image, nil
+}
+func (s *PostStore) GetImagesByPostID(ctx context.Context, post_id int) ([]string, error) {
+	query := "SELECT image_url FROM post_image WHERE post_id=?"
+	rows, err := s.db.QueryContext(ctx, query, post_id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var images []string
+	for rows.Next() {
+		var url string
+		err := rows.Scan(&url)
+		if err != nil {
+			return nil, err
+		}
+		images = append(images, url)
+
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return images, nil
 }
 func (s *PostStore) BeginTransaction(ctx context.Context) (*sql.Tx, error) {
 	return s.db.BeginTx(ctx, nil)

@@ -20,7 +20,7 @@ type PostImage struct {
 type PostRepository interface {
 	CreatePost(ctx context.Context, tx *sql.Tx, post *Post) (*Post, error)
 	UpdatePost(ctx context.Context, post *Post) error
-	DeletePost(ctx context.Context, id int) error
+	DeletePost(ctx context.Context, tx *sql.Tx, id int) error
 	GetPostByID(ctx context.Context, id int) (*Post, error)
 	GetPostsByUserID(ctx context.Context, userID int) ([]*Post, error)
 
@@ -28,6 +28,7 @@ type PostRepository interface {
 	UpdatePostImage(ctx context.Context, image *PostImage) error
 	DeletePostImage(ctx context.Context, id int) error
 	GetPostImageByID(ctx context.Context, id int) (*PostImage, error)
+	GetImagesByPostID(ctx context.Context, post_id int) ([]string, error)
 
 	BeginTransaction(ctx context.Context) (*sql.Tx, error)
 }

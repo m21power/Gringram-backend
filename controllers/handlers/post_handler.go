@@ -95,16 +95,41 @@ func (h *PostHandler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 
 }
 func (h *PostHandler) DeletePost(w http.ResponseWriter, r *http.Request) {
+	// before deleting first grap the image url of the post since
+	// we have to delete from the cloud too
 	ctx := r.Context()
+	tx, err := h.postUsecase.BeginTransaction(ctx)
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+		}
+	}()
 	id, err := utils.GetID(r)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
 	}
-	err = h.postUsecase.DeletePost(ctx, id)
+	imagesURl, err := h.postUsecase.GetImagesByPostID(ctx, id)
+	err = h.postUsecase.DeletePost(ctx, tx, id)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
+	}
+	for _, url := range imagesURl {
+		err := utils.DeleteImageFromCloud(r, url)
+		if err != nil {
+			utils.WriteError(w, err)
+			return
+		}
 	}
 	utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "deleted successfully!"})
 }
@@ -120,7 +145,13 @@ func (h *PostHandler) GetPostByID(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, err)
 		return
 	}
-	utils.WriteJSON(w, http.StatusOK, post)
+	images, err := h.postUsecase.GetImagesByPostID(ctx, id)
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+	response := utils.PostResponse{ID: post.ID, UserID: post.UserID, Content: post.Content, Images: images, CreatedAt: post.CreatedAt}
+	utils.WriteJSON(w, http.StatusOK, map[string]utils.PostResponse{"post": response})
 }
 func (h *PostHandler) GetPostsByUserID(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
