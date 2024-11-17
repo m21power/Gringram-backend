@@ -25,8 +25,18 @@ func (h *PostHandler) CreatePost(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, err)
 		return
 	}
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+		}
+	}()
 	var post types.PostPayload
-	err = json.NewDecoder(r.Body).Decode(&post)
+	_, err = utils.GetPayload(w, r, &post)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -37,7 +47,24 @@ func (h *PostHandler) CreatePost(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, err)
 		return
 	}
-	utils.WriteJSON(w, http.StatusOK, p)
+	// now let's check whether there is image going to be posted or not
+	urls, err := utils.GetPostImagesURL(r)
+	if len(urls) > 0 {
+		for _, url := range urls {
+			image := &domain.PostImage{PostID: p.ID, ImageURL: url}
+			_, err := h.postUsecase.CreatePostImage(ctx, tx, image)
+			if err != nil {
+				// Cleanup uploaded images on error
+				for _, cleanupURL := range urls {
+					utils.DeleteImageFromCloud(r, cleanupURL)
+				}
+				utils.WriteError(w, err)
+				return
+			}
+		}
+	}
+	response := utils.PostResponse{ID: p.ID, UserID: p.UserID, Content: p.Content, Images: urls, CreatedAt: p.CreatedAt}
+	utils.WriteJSON(w, http.StatusOK, map[string]utils.PostResponse{"post": response})
 
 }
 func (h *PostHandler) UpdatePost(w http.ResponseWriter, r *http.Request) {
@@ -117,36 +144,46 @@ func (h *PostHandler) CreatePostImage(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, err)
 		return
 	}
-	url, err := utils.GetImageUrl(r)
-	if url == "" {
-		utils.WriteJSON(w, http.StatusBadRequest, map[string]string{"message": "image no uploaded"})
+	defer func() { // the reason i used this here is that since tx should be different for all the loop
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+		}
+	}()
+	urls, err := utils.GetPostImagesURL(r)
+	if urls == nil {
+		utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "image not uploaded"})
 		return
 	}
 	if err != nil {
 		utils.WriteError(w, err)
 		return
 	}
-	imagePayload, err := utils.GetImagePayload(w, r)
+	var payload types.PostImagePayload
+	_, err = utils.GetPayload(w, r, &payload)
 	if err != nil {
-		err := utils.DeleteImageFromCloud(r, url)
+		for _, url := range urls {
+			utils.DeleteImageFromCloud(r, url)
+		}
+		utils.WriteError(w, err)
+		return
+	}
+	for _, url := range urls {
+		image := toPostImage(&payload, url)
+		_, err := h.postUsecase.CreatePostImage(ctx, tx, image)
 		if err != nil {
+			for _, url := range urls {
+				utils.DeleteImageFromCloud(r, url)
+			}
 			utils.WriteError(w, err)
 			return
 		}
-		utils.WriteError(w, err)
-		return
 	}
-	image := toPostImage(imagePayload, url)
-	pimage, err := h.postUsecase.CreatePostImage(ctx, tx, image)
-	if err != nil {
-		if er := utils.DeleteImageFromCloud(r, url); er != nil {
-			utils.WriteError(w, er)
-			return
-		}
-		utils.WriteError(w, err)
-		return
-	}
-	utils.WriteJSON(w, http.StatusOK, pimage)
+	utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "Image posted successfully"})
 
 }
 func (h *PostHandler) UpdatePostImage(w http.ResponseWriter, r *http.Request) {
@@ -164,7 +201,7 @@ func (h *PostHandler) UpdatePostImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url, err := utils.GetImageUrl(r)
+	url, err := utils.GetPostImageURL(r)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

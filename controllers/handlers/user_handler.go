@@ -22,7 +22,7 @@ func NewUserHandler(usecase *usecases.UserUsecase) *UserHandler {
 
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	url, err := utils.GetImageUrl(r)
+	url, err := utils.GetProfileUrl(r)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -125,7 +125,7 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, err)
 		return
 	}
-	url, err = utils.GetImageUrl(r)
+	url, err = utils.GetProfileUrl(r)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

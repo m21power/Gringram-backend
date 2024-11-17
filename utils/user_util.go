@@ -12,7 +12,7 @@ import (
 	"github.com/m21power/GrinGram/types"
 )
 
-func GetImageUrl(r *http.Request) (string, error) {
+func GetProfileUrl(r *http.Request) (string, error) {
 	cld, err := cloudinary.NewFromParams("dl6vahv6t", "639632577282947", "_qyu3umAppkfaRNR84QUuWiIa7U")
 	if err != nil {
 		return "", err
@@ -27,7 +27,7 @@ func GetImageUrl(r *http.Request) (string, error) {
 		return "", err
 	}
 	// Get the file from the form data
-	file, _, err := r.FormFile("image") // "image" is the key in the form
+	file, _, err := r.FormFile("profile") // "profile" is the key in the form
 	if file == nil {
 		return "", nil
 	}
@@ -100,7 +100,7 @@ func GetUserPayload(w http.ResponseWriter, r *http.Request) (*types.UserPayload,
 	}
 
 	// Access the `data` part
-	jsonData := r.FormValue("data") // Retrieve the `data` field from the form
+	jsonData := r.FormValue("UserPayload") // Retrieve the `data` field from the form
 	if jsonData == "" {
 		return nil, err
 	}
@@ -113,7 +113,7 @@ func GetUserPayload(w http.ResponseWriter, r *http.Request) (*types.UserPayload,
 	}
 	return &userPayload, nil
 }
-func GetImagePayload(w http.ResponseWriter, r *http.Request) (*types.PostImagePayload, error) {
+func GetPayload(w http.ResponseWriter, r *http.Request, payload any) (any, error) {
 	if r.ContentLength == 0 {
 		return nil, nil
 	}
@@ -124,16 +124,89 @@ func GetImagePayload(w http.ResponseWriter, r *http.Request) (*types.PostImagePa
 	}
 
 	// Access the `data` part
-	jsonData := r.FormValue("data") // Retrieve the `data` field from the form
+	jsonData := r.FormValue("DataPayload") // Retrieve the `data` field from the form
 	if jsonData == "" {
 		return nil, err
 	}
 
 	// Unmarshal JSON into the struct
-	var imagePayload types.PostImagePayload
-	err = json.Unmarshal([]byte(jsonData), &imagePayload)
+	err = json.Unmarshal([]byte(jsonData), &payload)
 	if err != nil {
 		return nil, err
 	}
-	return &imagePayload, nil
+	return &payload, nil
+}
+func GetPostImagesURL(r *http.Request) ([]string, error) {
+	cld, err := cloudinary.NewFromParams("dl6vahv6t", "639632577282947", "_qyu3umAppkfaRNR84QUuWiIa7U")
+	if err != nil {
+		return nil, err
+	}
+	if r.ContentLength == 0 {
+		return nil, nil
+	}
+	// Parse form data, including file
+
+	err = r.ParseMultipartForm(10 << 20) // 10 MB limit
+	if err != nil {
+		return nil, err
+	}
+	// Get the file from the form data
+	files := r.MultipartForm.File["PostImage"] // "profile" is the key in the form
+	if files == nil {
+		return nil, nil
+	}
+	var Urls []string
+	for _, fileHeader := range files {
+		file, err := fileHeader.Open()
+		if err != nil {
+			return nil, err
+		}
+		// Upload image to Cloudinary
+		// We will upload the file directly from the reader (file content)
+		resp, err := cld.Upload.Upload(r.Context(), file, uploader.UploadParams{
+			Folder: "images",
+		})
+		defer file.Close()
+		if err != nil {
+			return nil, err
+		}
+		Urls = append(Urls, resp.URL)
+	}
+	return Urls, nil
+
+}
+func GetPostImageURL(r *http.Request) (string, error) {
+	cld, err := cloudinary.NewFromParams("dl6vahv6t", "639632577282947", "_qyu3umAppkfaRNR84QUuWiIa7U")
+	if err != nil {
+		return "", err
+	}
+	if r.ContentLength == 0 {
+		return "", nil
+	}
+	// Parse form data, including file
+
+	err = r.ParseMultipartForm(10 << 20) // 10 MB limit
+	if err != nil {
+		return "", err
+	}
+	// Get the file from the form data
+	file, _, err := r.FormFile("PostImage") // "profile" is the key in the form
+	if file == nil {
+		return "", nil
+	}
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+	// Upload image to Cloudinary
+	// We will upload the file directly from the reader (file content)
+	resp, err := cld.Upload.Upload(r.Context(), file, uploader.UploadParams{
+		Folder: "images",
+	})
+
+	if err != nil {
+		return "", err
+	}
+	return resp.URL, nil
+
 }

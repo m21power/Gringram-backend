@@ -18,16 +18,6 @@ func NewPostStore(db *sql.DB) *PostStore {
 func (s *PostStore) CreatePost(ctx context.Context, tx *sql.Tx, post *domain.Post) (*domain.Post, error) {
 	query := "INSERT INTO post(user_id,content) VALUES(?,?)"
 	res, err := tx.ExecContext(ctx, query, post.UserID, post.Content)
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p)
-		} else if err != nil {
-			tx.Rollback()
-		} else {
-			tx.Commit()
-		}
-	}()
 	if err != nil {
 		return nil, err
 	}
@@ -85,16 +75,6 @@ func (s *PostStore) GetPostsByUserID(ctx context.Context, userID int) ([]*domain
 func (s *PostStore) CreatePostImage(ctx context.Context, tx *sql.Tx, image *domain.PostImage) (*domain.PostImage, error) {
 	query := "INSERT INTO post_image(post_id,image_url) VALUES(?,?)"
 	res, err := tx.ExecContext(ctx, query, image.PostID, image.ImageURL)
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p)
-		} else if err != nil {
-			tx.Rollback()
-		} else {
-			tx.Commit()
-		}
-	}()
 	if err != nil {
 		return nil, err
 	}
