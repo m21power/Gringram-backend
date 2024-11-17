@@ -48,7 +48,7 @@ func GetImageUrl(r *http.Request) (string, error) {
 
 }
 
-func DeleteProfileFromCloud(r *http.Request, link string) error {
+func DeleteImageFromCloud(r *http.Request, link string) error {
 	if link == "" {
 		return nil
 	}
@@ -112,4 +112,28 @@ func GetUserPayload(w http.ResponseWriter, r *http.Request) (*types.UserPayload,
 		return nil, err
 	}
 	return &userPayload, nil
+}
+func GetImagePayload(w http.ResponseWriter, r *http.Request) (*types.PostImagePayload, error) {
+	if r.ContentLength == 0 {
+		return nil, nil
+	}
+	// Parse the multipart form
+	err := r.ParseMultipartForm(10 << 20) // 10 MB max memory
+	if err != nil {
+		return nil, err
+	}
+
+	// Access the `data` part
+	jsonData := r.FormValue("data") // Retrieve the `data` field from the form
+	if jsonData == "" {
+		return nil, err
+	}
+
+	// Unmarshal JSON into the struct
+	var imagePayload types.PostImagePayload
+	err = json.Unmarshal([]byte(jsonData), &imagePayload)
+	if err != nil {
+		return nil, err
+	}
+	return &imagePayload, nil
 }

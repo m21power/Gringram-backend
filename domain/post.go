@@ -24,7 +24,7 @@ type PostRepository interface {
 	GetPostByID(ctx context.Context, id int) (*Post, error)
 	GetPostsByUserID(ctx context.Context, userID int) ([]*Post, error)
 
-	CreatePostImage(ctx context.Context, image *PostImage) (*PostImage, error)
+	CreatePostImage(ctx context.Context, tx *sql.Tx, image *PostImage) (*PostImage, error)
 	UpdatePostImage(ctx context.Context, image *PostImage) error
 	DeletePostImage(ctx context.Context, id int) error
 	GetPostImageByID(ctx context.Context, id int) (*PostImage, error)

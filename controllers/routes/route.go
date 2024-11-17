@@ -48,6 +48,12 @@ func (r *Router) RegisterRoute() {
 	r.route.HandleFunc("/user/post/{id}", postHandler.DeletePost).Methods("DELETE")
 	r.route.HandleFunc("/user/post/update/{id}", postHandler.UpdatePost).Methods("PUT")
 
+	// POST IMAGE ROUTE
+	r.route.HandleFunc("/user/post/image", postHandler.CreatePostImage).Methods("POST")
+	r.route.HandleFunc("/user/post/image/update/{id}", postHandler.UpdatePostImage).Methods("PUT")
+	r.route.HandleFunc("/user/post/image/{id}", postHandler.DeletePostImage).Methods("DELETE")
+	r.route.HandleFunc("/user/post/image/{id}", postHandler.GetPostImageByID).Methods("GET")
+
 }
 
 func (r *Router) Run(addr string, ru *mux.Router) error {

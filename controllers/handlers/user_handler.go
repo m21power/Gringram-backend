@@ -120,7 +120,7 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// now we have to delete first from the cloud
-	err = utils.DeleteProfileFromCloud(r, url)
+	err = utils.DeleteImageFromCloud(r, url)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -199,7 +199,7 @@ func (h *UserHandler) DeleteUserImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// now we have to delete first from the cloud
-	err = utils.DeleteProfileFromCloud(r, url)
+	err = utils.DeleteImageFromCloud(r, url)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

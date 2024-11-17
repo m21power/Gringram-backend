@@ -31,8 +31,8 @@ func (u *PostUsecase) GetPostsByUserID(ctx context.Context, userID int) ([]*doma
 	return u.postRepository.GetPostsByUserID(ctx, userID)
 }
 
-func (u *PostUsecase) CreatePostImage(ctx context.Context, image *domain.PostImage) (*domain.PostImage, error) {
-	return u.postRepository.CreatePostImage(ctx, image)
+func (u *PostUsecase) CreatePostImage(ctx context.Context, tx *sql.Tx, image *domain.PostImage) (*domain.PostImage, error) {
+	return u.postRepository.CreatePostImage(ctx, tx, image)
 }
 
 func (u *PostUsecase) UpdatePostImage(ctx context.Context, image *domain.PostImage) error {
