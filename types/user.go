@@ -6,5 +6,4 @@ type UserPayload struct {
 	Password string `json:"password" db:"password"`
 	Email    string `json:"email" db:"email"`
 	Bio      string `json:"bio" db:"bio"`
-	// ProfileImageUrl string `json:"image_url" db:"profile_image_url"`
 }

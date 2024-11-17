@@ -1,6 +1,10 @@
 package domain
 
-import "time"
+import (
+	"context"
+	"database/sql"
+	"time"
+)
 
 type Post struct {
 	ID        int       `json:"id" db:"id"`
@@ -14,14 +18,16 @@ type PostImage struct {
 	ImageURL string `json:"image_url" db:"image_url"`
 }
 type PostRepository interface {
-	CreatePost(post *Post) (*Post, error)
-	UpdatePost(post *Post) error
-	DeletePost(id int) error
-	GetPostByID(id int) (*Post, error)
-	GetPostsByUserID(userID int) ([]*Post, error)
+	CreatePost(ctx context.Context, tx *sql.Tx, post *Post) (*Post, error)
+	UpdatePost(ctx context.Context, post *Post) error
+	DeletePost(ctx context.Context, id int) error
+	GetPostByID(ctx context.Context, id int) (*Post, error)
+	GetPostsByUserID(ctx context.Context, userID int) ([]*Post, error)
 
-	CreatePostImage(image *PostImage) (*PostImage, error)
-	UpdatePostImage(image *PostImage) error
-	DeletePostImage(id int) error
-	GetPostImage(id int) (*PostImage, error)
+	CreatePostImage(ctx context.Context, image *PostImage) (*PostImage, error)
+	UpdatePostImage(ctx context.Context, image *PostImage) error
+	DeletePostImage(ctx context.Context, id int) error
+	GetPostImageByID(ctx context.Context, id int) (*PostImage, error)
+
+	BeginTransaction(ctx context.Context) (*sql.Tx, error)
 }

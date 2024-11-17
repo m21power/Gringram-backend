@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"database/sql"
 	"time"
 
@@ -14,9 +15,19 @@ type PostStore struct {
 func NewPostStore(db *sql.DB) *PostStore {
 	return &PostStore{db: db}
 }
-func (s *PostStore) CreatePost(post *domain.Post) (*domain.Post, error) {
+func (s *PostStore) CreatePost(ctx context.Context, tx *sql.Tx, post *domain.Post) (*domain.Post, error) {
 	query := "INSERT INTO post(user_id,content) VALUES(?,?)"
-	res, err := s.db.Exec(query)
+	res, err := tx.ExecContext(ctx, query, post.UserID, post.Content)
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+		}
+	}()
 	if err != nil {
 		return nil, err
 	}
@@ -28,9 +39,9 @@ func (s *PostStore) CreatePost(post *domain.Post) (*domain.Post, error) {
 	post.CreatedAt = time.Now()
 	return post, nil
 }
-func (s *PostStore) UpdatePost(post *domain.Post) error {
+func (s *PostStore) UpdatePost(ctx context.Context, post *domain.Post) error {
 	query := "UPDATE post SET content=? WHERE id=?"
-	_, err := s.db.Exec(query, post.Content, post.ID)
+	_, err := s.db.ExecContext(ctx, query, post.Content, post.ID)
 	if err != nil {
 		return err
 	}
@@ -38,18 +49,18 @@ func (s *PostStore) UpdatePost(post *domain.Post) error {
 
 }
 
-func (s *PostStore) DeletePost(id int) error {
+func (s *PostStore) DeletePost(ctx context.Context, id int) error {
 	query := "DELETE FROM post WHERE id=?"
-	_, err := s.db.Exec(query, id)
+	_, err := s.db.ExecContext(ctx, query, id)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *PostStore) GetPostByID(id int) (*domain.Post, error) {
+func (s *PostStore) GetPostByID(ctx context.Context, id int) (*domain.Post, error) {
 	query := "SELECT * FROM post WHERE id=?"
-	row := s.db.QueryRow(query, id)
+	row := s.db.QueryRowContext(ctx, query, id)
 	var post domain.Post
 	err := row.Scan(&post.ID, &post.UserID, &post.Content, &post.CreatedAt)
 	if err != nil {
@@ -58,9 +69,9 @@ func (s *PostStore) GetPostByID(id int) (*domain.Post, error) {
 	return &post, nil
 }
 
-func (s *PostStore) GetPostsByUserID(userID int) ([]*domain.Post, error) {
+func (s *PostStore) GetPostsByUserID(ctx context.Context, userID int) ([]*domain.Post, error) {
 	query := "SELECT * FROM post WHERE user_id=?"
-	rows, err := s.db.Query(query, userID)
+	rows, err := s.db.QueryContext(ctx, query, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -71,9 +82,9 @@ func (s *PostStore) GetPostsByUserID(userID int) ([]*domain.Post, error) {
 	return posts, nil
 }
 
-func (s *PostStore) CreatePostImage(image *domain.PostImage) (*domain.PostImage, error) {
+func (s *PostStore) CreatePostImage(ctx context.Context, image *domain.PostImage) (*domain.PostImage, error) {
 	query := "INSERT INTO post_image(post_id,image_url) VALUES(?,?)"
-	res, err := s.db.Exec(query, image.PostID, image.ImageURL)
+	res, err := s.db.ExecContext(ctx, query, image.PostID, image.ImageURL)
 	if err != nil {
 		return nil, err
 	}
@@ -84,31 +95,34 @@ func (s *PostStore) CreatePostImage(image *domain.PostImage) (*domain.PostImage,
 	image.ID = int(id)
 	return image, nil
 }
-func (s *PostStore) UpdatePostImage(image *domain.PostImage) error {
+func (s *PostStore) UpdatePostImage(ctx context.Context, image *domain.PostImage) error {
 	query := "UPDATE post_image SET image_url=? WHERE id=?"
-	_, err := s.db.Exec(query, image.ID)
+	_, err := s.db.ExecContext(ctx, query, image.ID)
 	if err != nil {
 		return err
 	}
 	return nil
 }
-func (s *PostStore) DeletePostImage(id int) error {
+func (s *PostStore) DeletePostImage(ctx context.Context, id int) error {
 	query := "DELETE FROM post_image WHERE id=?"
-	_, err := s.db.Exec(query, id)
+	_, err := s.db.ExecContext(ctx, query, id)
 	if err != nil {
 		return err
 	}
 	return nil
 }
-func (s *PostStore) GetPostImage(id int) (*domain.PostImage, error) {
+func (s *PostStore) GetPostImageByID(ctx context.Context, id int) (*domain.PostImage, error) {
 	query := "SELECT * FROM post_image WHERE id=?"
-	row := s.db.QueryRow(query, id)
+	row := s.db.QueryRowContext(ctx, query, id)
 	var image domain.PostImage
 	err := row.Scan(&image.ID, &image.PostID, &image.ImageURL)
 	if err != nil {
 		return nil, err
 	}
 	return &image, nil
+}
+func (s *PostStore) BeginTransaction(ctx context.Context) (*sql.Tx, error) {
+	return s.db.BeginTx(ctx, nil)
 }
 func scanIntoList(rows *sql.Rows) ([]*domain.Post, error) {
 	var ans []*domain.Post
