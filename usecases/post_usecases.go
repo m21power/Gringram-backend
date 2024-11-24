@@ -30,23 +30,6 @@ func (u *PostUsecase) GetPostByID(ctx context.Context, id int) (*domain.Post, er
 func (u *PostUsecase) GetPostsByUserID(ctx context.Context, userID int) ([]*domain.Post, error) {
 	return u.postRepository.GetPostsByUserID(ctx, userID)
 }
-
-func (u *PostUsecase) CreatePostImage(ctx context.Context, tx *sql.Tx, image *domain.PostImage) (*domain.PostImage, error) {
-	return u.postRepository.CreatePostImage(ctx, tx, image)
-}
-
-func (u *PostUsecase) UpdatePostImage(ctx context.Context, image *domain.PostImage) error {
-	return u.postRepository.UpdatePostImage(ctx, image)
-}
-func (u *PostUsecase) DeletePostImage(ctx context.Context, id int) error {
-	return u.postRepository.DeletePostImage(ctx, id)
-}
-func (u *PostUsecase) GetPostImageByID(ctx context.Context, id int) (*domain.PostImage, error) {
-	return u.postRepository.GetPostImageByID(ctx, id)
-}
-func (u *PostUsecase) GetImagesByPostID(ctx context.Context, post_id int) ([]string, error) {
-	return u.postRepository.GetImagesByPostID(ctx, post_id)
-}
 func (u *PostUsecase) BeginTransaction(ctx context.Context) (*sql.Tx, error) {
 	return u.postRepository.BeginTransaction(ctx)
 }

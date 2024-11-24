@@ -1,0 +1,4 @@
+ALTER TABLE
+    posts
+MODIFY
+    COLUMN content TEXT NOT NULL;

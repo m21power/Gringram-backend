@@ -30,10 +30,10 @@ func (r *Router) RegisterRoute() {
 	userHandler := handlers.NewUserHandler(userUsecase)
 
 	r.route.HandleFunc("/user", userHandler.CreateUser).Methods("POST")
-	// r.route.HandleFunc("/user/email", userHandler.GetUserByEmail).Methods("GET")
-	// r.route.HandleFunc("/user/{id}", userHandler.GetUserByID).Methods("GET")
-	r.route.HandleFunc("/user/username", userHandler.GetUserByUsername).Methods("GET")
-	r.route.HandleFunc("/user/{id}", userHandler.DeleteUser).Methods("DELETE")
+	r.route.HandleFunc("/user/{id}", userHandler.GetUserByID).Methods("GET")
+	r.route.HandleFunc("/user/email/", userHandler.GetUserByEmail).Methods("GET")
+	r.route.HandleFunc("/user/username/", userHandler.GetUserByUsername).Methods("GET")
+	r.route.HandleFunc("/user/delete/{id}", userHandler.DeleteUser).Methods("DELETE")
 	r.route.HandleFunc("/user/update/{id}", userHandler.UpdateUser).Methods("PUT")
 	r.route.HandleFunc("/user/image/{id}", userHandler.DeleteUserImage).Methods("DELETE")
 
@@ -45,14 +45,8 @@ func (r *Router) RegisterRoute() {
 	r.route.HandleFunc("/user/post", postHandler.CreatePost).Methods("POST")
 	r.route.HandleFunc("/user/post/{id}", postHandler.GetPostByID).Methods("GET")
 	r.route.HandleFunc("/user/post/user/{id}", postHandler.GetPostsByUserID).Methods("GET")
-	r.route.HandleFunc("/user/post/{id}", postHandler.DeletePost).Methods("DELETE")
+	r.route.HandleFunc("/user/post/delete/{id}", postHandler.DeletePost).Methods("DELETE")
 	r.route.HandleFunc("/user/post/update/{id}", postHandler.UpdatePost).Methods("PUT")
-
-	// POST IMAGE ROUTE
-	r.route.HandleFunc("/user/post/image", postHandler.CreatePostImage).Methods("POST")
-	r.route.HandleFunc("/user/post/image/update/{id}", postHandler.UpdatePostImage).Methods("PUT")
-	r.route.HandleFunc("/user/post/image/{id}", postHandler.DeletePostImage).Methods("DELETE")
-	r.route.HandleFunc("/user/post/image/{id}", postHandler.GetPostImageByID).Methods("GET")
 
 }
 

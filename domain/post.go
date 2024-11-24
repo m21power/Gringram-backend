@@ -7,10 +7,14 @@ import (
 )
 
 type Post struct {
-	ID        int       `json:"id" db:"id"`
-	UserID    int       `json:"user_id" db:"user_id"`
-	Content   string    `json:"content" db:"content"`
-	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	ID             int       `json:"id" db:"id"`
+	Content        string    `json:"content" db:"content"`
+	UserID         int       `json:"user_id" db:"user_id"`
+	Status         string    `json:"status" db:"status"`
+	Image_url      string    `json:"image_url" db:"image_url"`
+	Likes_count    int       `json:"likes_count" db:"likes_count"`
+	Comments_count int       `json:"comments_count" db:"comments_count"`
+	CreatedAt      time.Time `json:"created_at" db:"created_at"`
 }
 type PostImage struct {
 	ID       int    `json:"id" db:"id"`
@@ -23,12 +27,5 @@ type PostRepository interface {
 	DeletePost(ctx context.Context, tx *sql.Tx, id int) error
 	GetPostByID(ctx context.Context, id int) (*Post, error)
 	GetPostsByUserID(ctx context.Context, userID int) ([]*Post, error)
-
-	CreatePostImage(ctx context.Context, tx *sql.Tx, image *PostImage) (*PostImage, error)
-	UpdatePostImage(ctx context.Context, image *PostImage) error
-	DeletePostImage(ctx context.Context, id int) error
-	GetPostImageByID(ctx context.Context, id int) (*PostImage, error)
-	GetImagesByPostID(ctx context.Context, post_id int) ([]string, error)
-
 	BeginTransaction(ctx context.Context) (*sql.Tx, error)
 }

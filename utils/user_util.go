@@ -124,7 +124,7 @@ func GetPayload(w http.ResponseWriter, r *http.Request, payload any) (any, error
 	}
 
 	// Access the `data` part
-	jsonData := r.FormValue("DataPayload") // Retrieve the `data` field from the form
+	jsonData := r.FormValue("PostPayload") // Retrieve the `data` field from the form
 	if jsonData == "" {
 		return nil, err
 	}
