@@ -30,9 +30,9 @@ func (r *Router) RegisterRoute() {
 	userHandler := handlers.NewUserHandler(userUsecase)
 
 	r.route.HandleFunc("/user", userHandler.CreateUser).Methods("POST")
-	r.route.HandleFunc("/user/{id}", userHandler.GetUserByID).Methods("GET")
-	r.route.HandleFunc("/user/email/", userHandler.GetUserByEmail).Methods("GET")
-	r.route.HandleFunc("/user/username/", userHandler.GetUserByUsername).Methods("GET")
+	// r.route.HandleFunc("/user/email", userHandler.GetUserByEmail).Methods("GET")
+	// r.route.HandleFunc("/user/{id}", userHandler.GetUserByID).Methods("GET")
+	r.route.HandleFunc("/user/username", userHandler.GetUserByUsername).Methods("GET")
 	r.route.HandleFunc("/user/{id}", userHandler.DeleteUser).Methods("DELETE")
 	r.route.HandleFunc("/user/update/{id}", userHandler.UpdateUser).Methods("PUT")
 	r.route.HandleFunc("/user/image/{id}", userHandler.DeleteUserImage).Methods("DELETE")

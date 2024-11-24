@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 
 	auth "github.com/m21power/GrinGram/Auth"
@@ -40,6 +41,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	cu, err := h.usecase.CreateUser(ctx, user)
 	if err != nil {
 		utils.WriteError(w, err)
+		utils.DeleteImageFromCloud(r, url)
 		return
 	}
 	utils.WriteJSON(w, http.StatusCreated, cu)
@@ -63,6 +65,7 @@ func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) GetUserByEmail(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	email := r.URL.Query().Get("email")
+	log.Println(email)
 	if email == "" {
 		utils.WriteError(w, nil)
 		return

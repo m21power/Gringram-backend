@@ -12,7 +12,8 @@ type User struct {
 	Username        string    `json:"username" db:"username"`
 	Password        string    `json:"password" db:"password"`
 	Email           string    `json:"email" db:"email"`
-	Bio             string    `json:"bio" db:"bio"`                     // optional
+	Bio             string    `json:"bio" db:"bio"`
+	Role            string    `json:"role" db:"role"`
 	ProfileImageUrl string    `json:"image_url" db:"profile_image_url"` // optional
 	CreatedAt       time.Time `json:"created_at" db:"created_at"`
 }
