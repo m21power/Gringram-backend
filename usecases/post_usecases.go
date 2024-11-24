@@ -59,3 +59,15 @@ func (u *PostUsecase) DeleteComment(ctx context.Context, tx *sql.Tx, id int) err
 func (u *PostUsecase) GetCommentByID(ctx context.Context, id int) (*domain.Comment, error) {
 	return u.postRepository.GetCommentByID(ctx, id)
 }
+
+// like
+
+func (u *PostUsecase) MakeLike(ctx context.Context, like *domain.Like) (*domain.Like, error) {
+	return u.postRepository.MakeLike(ctx, like)
+}
+func (u *PostUsecase) DisLike(ctx context.Context, like *domain.Like) error {
+	return u.postRepository.DisLike(ctx, like)
+}
+func (u *PostUsecase) GetLikers(ctx context.Context, postID int) ([]int, error) {
+	return u.postRepository.GetLikers(ctx, postID)
+}

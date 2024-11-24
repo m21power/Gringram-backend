@@ -1,4 +1,0 @@
-ALTER TABLE
-    posts
-MODIFY
-    COLUMN content TEXT NULL;

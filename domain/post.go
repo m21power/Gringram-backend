@@ -31,11 +31,15 @@ type PostRepository interface {
 	IncrementLikeCount(ctx context.Context, tx *sql.Tx, id int) error
 	DecrementCommentCount(ctx context.Context, tx *sql.Tx, postID int, commentID int) error
 	DecrementLikeCount(ctx context.Context, tx *sql.Tx, id int) error
-
 	BeginTransaction(ctx context.Context) (*sql.Tx, error)
-
+	//comment
 	CreateComment(ctx context.Context, tx *sql.Tx, comment *Comment) (*Comment, error)
 	UpdateComment(ctx context.Context, comment *Comment) error
 	DeleteComment(ctx context.Context, tx *sql.Tx, id int) error
 	GetCommentByID(ctx context.Context, id int) (*Comment, error)
+
+	// like
+	MakeLike(ctx context.Context, like *Like) (*Like, error)
+	DisLike(ctx context.Context, like *Like) error
+	GetLikers(ctx context.Context, postID int) ([]int, error)
 }

@@ -53,6 +53,11 @@ func (r *Router) RegisterRoute() {
 	r.route.HandleFunc("/user/post/comment/update/{id}", postHandler.UpdateComment).Methods("PUT")
 	r.route.HandleFunc("/user/post/comment/delete/{id}", postHandler.DeleteComment).Methods("DELETE")
 	r.route.HandleFunc("/user/post/comment/{id}", postHandler.GetCommentByID).Methods("GET")
+
+	//like route
+	r.route.HandleFunc("/user/post/like", postHandler.MakeLike).Methods("POST")
+	r.route.HandleFunc("/user/post/dislike", postHandler.DisLike).Methods("DELETE")
+	r.route.HandleFunc("/user/post/like/{id}", postHandler.GetLikers).Methods("GET")
 }
 
 func (r *Router) Run(addr string, ru *mux.Router) error {
