@@ -27,5 +27,15 @@ type PostRepository interface {
 	DeletePost(ctx context.Context, tx *sql.Tx, id int) error
 	GetPostByID(ctx context.Context, id int) (*Post, error)
 	GetPostsByUserID(ctx context.Context, userID int) ([]*Post, error)
+	IncrementCommentCount(ctx context.Context, tx *sql.Tx, id int) error
+	IncrementLikeCount(ctx context.Context, tx *sql.Tx, id int) error
+	DecrementCommentCount(ctx context.Context, tx *sql.Tx, postID int, commentID int) error
+	DecrementLikeCount(ctx context.Context, tx *sql.Tx, id int) error
+
 	BeginTransaction(ctx context.Context) (*sql.Tx, error)
+
+	CreateComment(ctx context.Context, tx *sql.Tx, comment *Comment) (*Comment, error)
+	UpdateComment(ctx context.Context, comment *Comment) error
+	DeleteComment(ctx context.Context, tx *sql.Tx, id int) error
+	GetCommentByID(ctx context.Context, id int) (*Comment, error)
 }

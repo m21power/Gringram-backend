@@ -48,6 +48,11 @@ func (r *Router) RegisterRoute() {
 	r.route.HandleFunc("/user/post/delete/{id}", postHandler.DeletePost).Methods("DELETE")
 	r.route.HandleFunc("/user/post/update/{id}", postHandler.UpdatePost).Methods("PUT")
 
+	//comment route
+	r.route.HandleFunc("/user/post/comment", postHandler.CreateComment).Methods("POST")
+	r.route.HandleFunc("/user/post/comment/update/{id}", postHandler.UpdateComment).Methods("PUT")
+	r.route.HandleFunc("/user/post/comment/delete/{id}", postHandler.DeleteComment).Methods("DELETE")
+	r.route.HandleFunc("/user/post/comment/{id}", postHandler.GetCommentByID).Methods("GET")
 }
 
 func (r *Router) Run(addr string, ru *mux.Router) error {

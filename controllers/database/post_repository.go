@@ -71,9 +71,6 @@ func (s *PostStore) GetPostsByUserID(ctx context.Context, userID int) ([]*domain
 	}
 	return posts, nil
 }
-func (s *PostStore) BeginTransaction(ctx context.Context) (*sql.Tx, error) {
-	return s.db.BeginTx(ctx, nil)
-}
 func scanIntoList(rows *sql.Rows) ([]*domain.Post, error) {
 	var ans []*domain.Post
 	defer rows.Close()
