@@ -59,6 +59,15 @@ func (h *PostHandler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, map[string]*domain.Post{"post": p})
 
 }
+func (h *PostHandler) GetPosts(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	posts, err := h.postUsecase.GetPosts(ctx)
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+	utils.WriteJSON(w, http.StatusOK, map[string][]*domain.Post{"posts": posts})
+}
 func (h *PostHandler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	var payload types.UpdatePostPayload
@@ -160,6 +169,22 @@ func (h *PostHandler) GetPostsByUserID(w http.ResponseWriter, r *http.Request) {
 	}
 	utils.WriteJSON(w, http.StatusOK, map[string][]*domain.Post{"posts": posts})
 
+}
+func (h *PostHandler) GetFeed(w http.ResponseWriter, r *http.Request) {
+	// later we take user id from our token
+	// for now lets take from the request
+	ctx := r.Context()
+	userId, err := utils.GetID(r)
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+	unseenPost, err := h.GetUnseenPost(ctx, userId)
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+	utils.WriteJSON(w, http.StatusOK, map[string][]*domain.Post{"posts": unseenPost})
 }
 func toDomainPost(post types.PostPayload, url string) *domain.Post {
 	return &domain.Post{UserID: post.UserID, Content: post.Content, Image_url: url}

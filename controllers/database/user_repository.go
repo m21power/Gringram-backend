@@ -33,6 +33,19 @@ func (s *UserStore) CreateUser(ctx context.Context, user *domain.User) (*domain.
 	}
 	user.ID = int(id)
 	user.CreatedAt = time.Now()
+
+	// post id
+	postsId, err := s.GetPostsID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// insert into interactions(user_id,post_id)
+	for _, postId := range postsId {
+		_, err := s.db.ExecContext(ctx, "INSERT INTO interactions(user_id,post_id) VALUES(?,?)", user.ID, postId)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return user, nil
 }
 
@@ -109,4 +122,21 @@ func (s *UserStore) GetProfileURL(ctx context.Context, tx *sql.Tx, id int) (stri
 }
 func (s *UserStore) BeginTransaction(ctx context.Context) (*sql.Tx, error) {
 	return s.db.BeginTx(ctx, nil)
+}
+func (s *UserStore) GetPostsID(ctx context.Context) ([]int, error) {
+	var postsID []int
+	query := "SELECT id FROM posts"
+	rows, err := s.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		var id int
+		err := rows.Scan(&id)
+		if err != nil {
+			return nil, err
+		}
+		postsID = append(postsID, id)
+	}
+	return postsID, nil
 }

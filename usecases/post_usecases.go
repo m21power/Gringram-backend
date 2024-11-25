@@ -21,6 +21,10 @@ func (u *PostUsecase) CreatePost(ctx context.Context, tx *sql.Tx, post *domain.P
 func (u *PostUsecase) UpdatePost(ctx context.Context, post *domain.Post) error {
 	return u.postRepository.UpdatePost(ctx, post)
 }
+func (u *PostUsecase) GetPosts(ctx context.Context) ([]*domain.Post, error) {
+	return u.postRepository.GetPosts(ctx)
+}
+
 func (u *PostUsecase) DeletePost(ctx context.Context, tx *sql.Tx, id int) error {
 	return u.postRepository.DeletePost(ctx, tx, id)
 }
@@ -72,6 +76,10 @@ func (u *PostUsecase) GetLikers(ctx context.Context, postID int) ([]int, error) 
 //	func (u *PostUsecase) CreateInteraction(ctx context.Context, inter *domain.Interaction) error {
 //		return u.postRepository.CreateInteraction(ctx, inter)
 //	}
-func (u *PostUsecase) GetUnseenPost(ctx context.Context, userID int) ([]int, error) {
-	return u.postRepository.GetUnseenPost(ctx, userID)
+func (u *PostUsecase) GetUnseenPostID(ctx context.Context, userID int) ([]int, error) {
+	return u.postRepository.GetUnseenPostID(ctx, userID)
+}
+
+func (u *PostUsecase) ViewPost(ctx context.Context, userID int, postID int) error {
+	return u.postRepository.ViewPost(ctx, userID, postID)
 }

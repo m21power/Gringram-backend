@@ -24,6 +24,7 @@ type PostImage struct {
 type PostRepository interface {
 	CreatePost(ctx context.Context, tx *sql.Tx, post *Post) (*Post, error)
 	UpdatePost(ctx context.Context, post *Post) error
+	GetPosts(ctx context.Context) ([]*Post, error)
 	DeletePost(ctx context.Context, tx *sql.Tx, id int) error
 	GetPostByID(ctx context.Context, id int) (*Post, error)
 	GetPostsByUserID(ctx context.Context, userID int) ([]*Post, error)
@@ -43,7 +44,6 @@ type PostRepository interface {
 	GetLikers(ctx context.Context, postID int) ([]int, error)
 
 	// interaction
-
-	// CreateInteraction(ctx context.Context, inter *Interaction) error
-	GetUnseenPost(ctx context.Context, userID int) ([]int, error)
+	GetUnseenPostID(ctx context.Context, userID int) ([]int, error)
+	ViewPost(ctx context.Context, userID int, postID int) error
 }

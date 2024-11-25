@@ -33,6 +33,23 @@ func (s *PostStore) CreatePost(ctx context.Context, tx *sql.Tx, post *domain.Pos
 	}
 	return post, nil
 }
+func (s *PostStore) GetPosts(ctx context.Context) ([]*domain.Post, error) {
+	var Posts []*domain.Post
+	query := "SELECT * FROM posts"
+	rows, err := s.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		var post domain.Post
+		err := rows.Scan(&post.ID, &post.Content, &post.UserID, &post.Status, &post.Image_url, &post.Likes_count, &post.Comments_count, &post.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		Posts = append(Posts, &post)
+	}
+	return Posts, nil
+}
 func (s *PostStore) UpdatePost(ctx context.Context, post *domain.Post) error {
 	query := "UPDATE posts SET content=?,image_url=? WHERE id=?"
 	_, err := s.db.ExecContext(ctx, query, post.Content, post.Image_url, post.ID)

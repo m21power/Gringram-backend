@@ -28,7 +28,7 @@ func (s *PostStore) CreateInteraction(ctx context.Context, tx *sql.Tx, postId in
 	}
 	return nil
 }
-func (s *PostStore) GetUnseenPost(ctx context.Context, userID int) ([]int, error) {
+func (s *PostStore) GetUnseenPostID(ctx context.Context, userID int) ([]int, error) {
 	var PostID []int
 	query := "SELECT post_id FROM interactions WHERE seen=? and user_id=?"
 	rows, err := s.db.QueryContext(ctx, query, false, userID)
@@ -44,4 +44,12 @@ func (s *PostStore) GetUnseenPost(ctx context.Context, userID int) ([]int, error
 		PostID = append(PostID, postId)
 	}
 	return PostID, nil
+}
+func (s *PostStore) ViewPost(ctx context.Context, userId int, postID int) error {
+	query := "UPDATE interactions SET seen=? WHERE user_id=? and post_id=?"
+	_, err := s.db.ExecContext(ctx, query, true, userId, postID)
+	if err != nil {
+		return err
+	}
+	return nil
 }

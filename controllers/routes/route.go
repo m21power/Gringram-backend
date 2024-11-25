@@ -44,6 +44,7 @@ func (r *Router) RegisterRoute() {
 
 	r.route.HandleFunc("/user/post", postHandler.CreatePost).Methods("POST")
 	r.route.HandleFunc("/user/post/{id}", postHandler.GetPostByID).Methods("GET")
+	r.route.HandleFunc("/user/posts/", postHandler.GetPosts).Methods("GET")
 	r.route.HandleFunc("/user/post/user/{id}", postHandler.GetPostsByUserID).Methods("GET")
 	r.route.HandleFunc("/user/post/delete/{id}", postHandler.DeletePost).Methods("DELETE")
 	r.route.HandleFunc("/user/post/update/{id}", postHandler.UpdatePost).Methods("PUT")
@@ -59,7 +60,8 @@ func (r *Router) RegisterRoute() {
 	r.route.HandleFunc("/user/post/like/{id}", postHandler.GetLikers).Methods("GET")
 
 	// interaction
-	r.route.HandleFunc("/user/post/unseen/{id}", postHandler.GetUnseenPost).Methods("GET")
+	r.route.HandleFunc("/user/post/feed/{id}", postHandler.GetFeed).Methods("GET")
+	r.route.HandleFunc("/user/post/view/", postHandler.ViewPost).Methods("POST")
 }
 
 func (r *Router) Run(addr string, ru *mux.Router) error {
