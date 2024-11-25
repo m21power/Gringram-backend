@@ -36,7 +36,7 @@ func (h *PostHandler) CreateComment(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, err)
 		return
 	}
-	err = h.postUsecase.IncrementCommentCount(ctx, tx, comment.PostID)
+	err = h.postUsecase.IncrementCommentCount(ctx, comment.PostID)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -117,7 +117,7 @@ func (h *PostHandler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, err)
 		return
 	}
-	err = h.postUsecase.DecrementCommentCount(ctx, tx, comment.PostID, id)
+	err = h.postUsecase.DecrementCommentCount(ctx, comment.PostID, id)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

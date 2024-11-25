@@ -62,43 +62,29 @@ func (s *PostStore) GetCommentByID(ctx context.Context, id int) (*domain.Comment
 	return &comment, nil
 
 }
-func (s *PostStore) IncrementCommentCount(ctx context.Context, tx *sql.Tx, id int) error {
+func (s *PostStore) IncrementCommentCount(ctx context.Context, id int) error {
 	query := "UPDATE posts SET comments_count=comments_count + 1 WHERE id=?"
-	_, err := tx.ExecContext(ctx, query, id)
+	_, err := s.db.ExecContext(ctx, query, id)
 	if err != nil {
 		return err
 	}
 	return nil
 }
-func (s *PostStore) IncrementLikeCount(ctx context.Context, tx *sql.Tx, id int) error {
-	query := "UPDATE posts SET likes_count=likes_count + 1 WHERE id=?"
-	_, err := tx.ExecContext(ctx, query, id)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-func (s *PostStore) DecrementCommentCount(ctx context.Context, tx *sql.Tx, postID int, commentID int) error {
+
+func (s *PostStore) DecrementCommentCount(ctx context.Context, postID int, commentID int) error {
 	row := s.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM comments WHERE parent_id=?", commentID)
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return err
 	}
 	query := "UPDATE posts SET comments_count=comments_count - ? WHERE id=?"
-	_, err := tx.ExecContext(ctx, query, count+1, postID)
+	_, err := s.db.ExecContext(ctx, query, count+1, postID)
 	if err != nil {
 		return err
 	}
 	return nil
 }
-func (s *PostStore) DecrementLikeCount(ctx context.Context, tx *sql.Tx, id int) error {
-	query := "UPDATE posts SET likes_count=likes_count - 1 WHERE id=?"
-	_, err := tx.ExecContext(ctx, query, id)
-	if err != nil {
-		return err
-	}
-	return nil
-}
+
 func (s *PostStore) BeginTransaction(ctx context.Context) (*sql.Tx, error) {
 	return s.db.BeginTx(ctx, nil)
 }

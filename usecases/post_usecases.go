@@ -30,17 +30,17 @@ func (u *PostUsecase) GetPostByID(ctx context.Context, id int) (*domain.Post, er
 func (u *PostUsecase) GetPostsByUserID(ctx context.Context, userID int) ([]*domain.Post, error) {
 	return u.postRepository.GetPostsByUserID(ctx, userID)
 }
-func (u *PostUsecase) IncrementCommentCount(ctx context.Context, tx *sql.Tx, id int) error {
-	return u.postRepository.IncrementCommentCount(ctx, tx, id)
+func (u *PostUsecase) IncrementCommentCount(ctx context.Context, id int) error {
+	return u.postRepository.IncrementCommentCount(ctx, id)
 }
-func (u *PostUsecase) IncrementLikeCount(ctx context.Context, tx *sql.Tx, id int) error {
-	return u.postRepository.IncrementLikeCount(ctx, tx, id)
+func (u *PostUsecase) IncrementLikeCount(ctx context.Context, id int) error {
+	return u.postRepository.IncrementLikeCount(ctx, id)
 }
-func (u *PostUsecase) DecrementCommentCount(ctx context.Context, tx *sql.Tx, postID int, commentID int) error {
-	return u.postRepository.DecrementCommentCount(ctx, tx, postID, commentID)
+func (u *PostUsecase) DecrementCommentCount(ctx context.Context, postID int, commentID int) error {
+	return u.postRepository.DecrementCommentCount(ctx, postID, commentID)
 }
-func (u *PostUsecase) DecrementLikeCount(ctx context.Context, tx *sql.Tx, id int) error {
-	return u.postRepository.DecrementLikeCount(ctx, tx, id)
+func (u *PostUsecase) DecrementLikeCount(ctx context.Context, id int) error {
+	return u.postRepository.DecrementLikeCount(ctx, id)
 }
 func (u *PostUsecase) BeginTransaction(ctx context.Context) (*sql.Tx, error) {
 	return u.postRepository.BeginTransaction(ctx)
@@ -64,9 +64,6 @@ func (u *PostUsecase) GetCommentByID(ctx context.Context, id int) (*domain.Comme
 
 func (u *PostUsecase) MakeLike(ctx context.Context, like *domain.Like) (*domain.Like, error) {
 	return u.postRepository.MakeLike(ctx, like)
-}
-func (u *PostUsecase) DisLike(ctx context.Context, like *domain.Like) error {
-	return u.postRepository.DisLike(ctx, like)
 }
 func (u *PostUsecase) GetLikers(ctx context.Context, postID int) ([]int, error) {
 	return u.postRepository.GetLikers(ctx, postID)

@@ -56,7 +56,6 @@ func (r *Router) RegisterRoute() {
 
 	//like route
 	r.route.HandleFunc("/user/post/like", postHandler.MakeLike).Methods("POST")
-	r.route.HandleFunc("/user/post/dislike", postHandler.DisLike).Methods("DELETE")
 	r.route.HandleFunc("/user/post/like/{id}", postHandler.GetLikers).Methods("GET")
 }
 

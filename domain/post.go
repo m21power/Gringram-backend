@@ -27,10 +27,10 @@ type PostRepository interface {
 	DeletePost(ctx context.Context, tx *sql.Tx, id int) error
 	GetPostByID(ctx context.Context, id int) (*Post, error)
 	GetPostsByUserID(ctx context.Context, userID int) ([]*Post, error)
-	IncrementCommentCount(ctx context.Context, tx *sql.Tx, id int) error
-	IncrementLikeCount(ctx context.Context, tx *sql.Tx, id int) error
-	DecrementCommentCount(ctx context.Context, tx *sql.Tx, postID int, commentID int) error
-	DecrementLikeCount(ctx context.Context, tx *sql.Tx, id int) error
+	IncrementCommentCount(ctx context.Context, id int) error
+	IncrementLikeCount(ctx context.Context, id int) error
+	DecrementCommentCount(ctx context.Context, postID int, commentID int) error
+	DecrementLikeCount(ctx context.Context, id int) error
 	BeginTransaction(ctx context.Context) (*sql.Tx, error)
 	//comment
 	CreateComment(ctx context.Context, tx *sql.Tx, comment *Comment) (*Comment, error)
@@ -40,6 +40,5 @@ type PostRepository interface {
 
 	// like
 	MakeLike(ctx context.Context, like *Like) (*Like, error)
-	DisLike(ctx context.Context, like *Like) error
 	GetLikers(ctx context.Context, postID int) ([]int, error)
 }
