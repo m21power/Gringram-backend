@@ -27,6 +27,10 @@ func (s *PostStore) CreatePost(ctx context.Context, tx *sql.Tx, post *domain.Pos
 	}
 	post.ID = int(id)
 	post.CreatedAt = time.Now()
+	err = s.CreateInteraction(ctx, tx, post.ID)
+	if err != nil {
+		return nil, err
+	}
 	return post, nil
 }
 func (s *PostStore) UpdatePost(ctx context.Context, post *domain.Post) error {

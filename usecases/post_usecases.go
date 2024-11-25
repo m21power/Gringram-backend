@@ -68,3 +68,10 @@ func (u *PostUsecase) MakeLike(ctx context.Context, like *domain.Like) (*domain.
 func (u *PostUsecase) GetLikers(ctx context.Context, postID int) ([]int, error) {
 	return u.postRepository.GetLikers(ctx, postID)
 }
+
+//	func (u *PostUsecase) CreateInteraction(ctx context.Context, inter *domain.Interaction) error {
+//		return u.postRepository.CreateInteraction(ctx, inter)
+//	}
+func (u *PostUsecase) GetUnseenPost(ctx context.Context, userID int) ([]int, error) {
+	return u.postRepository.GetUnseenPost(ctx, userID)
+}

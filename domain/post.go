@@ -41,4 +41,9 @@ type PostRepository interface {
 	// like
 	MakeLike(ctx context.Context, like *Like) (*Like, error)
 	GetLikers(ctx context.Context, postID int) ([]int, error)
+
+	// interaction
+
+	// CreateInteraction(ctx context.Context, inter *Interaction) error
+	GetUnseenPost(ctx context.Context, userID int) ([]int, error)
 }

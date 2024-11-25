@@ -57,6 +57,9 @@ func (r *Router) RegisterRoute() {
 	//like route
 	r.route.HandleFunc("/user/post/like", postHandler.MakeLike).Methods("POST")
 	r.route.HandleFunc("/user/post/like/{id}", postHandler.GetLikers).Methods("GET")
+
+	// interaction
+	r.route.HandleFunc("/user/post/unseen/{id}", postHandler.GetUnseenPost).Methods("GET")
 }
 
 func (r *Router) Run(addr string, ru *mux.Router) error {
