@@ -62,6 +62,7 @@ func (r *Router) RegisterRoute() {
 	// interaction
 	r.route.HandleFunc("/user/post/feed/{id}", postHandler.GetFeed).Methods("GET")
 	r.route.HandleFunc("/user/post/view/", postHandler.ViewPost).Methods("POST")
+	r.route.HandleFunc("/user/post/waiting/{id}", postHandler.UpdateWaitingList).Methods("PUT")
 }
 
 func (r *Router) Run(addr string, ru *mux.Router) error {

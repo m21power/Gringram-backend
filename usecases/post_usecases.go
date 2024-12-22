@@ -76,10 +76,14 @@ func (u *PostUsecase) GetLikers(ctx context.Context, postID int) ([]int, error) 
 //	func (u *PostUsecase) CreateInteraction(ctx context.Context, inter *domain.Interaction) error {
 //		return u.postRepository.CreateInteraction(ctx, inter)
 //	}
-func (u *PostUsecase) GetUnseenPostID(ctx context.Context, userID int) ([]int, error) {
+func (u *PostUsecase) GetUnseenPostID(ctx context.Context, userID int) ([][]int, error) {
 	return u.postRepository.GetUnseenPostID(ctx, userID)
 }
 
 func (u *PostUsecase) ViewPost(ctx context.Context, userID int, postID int) error {
 	return u.postRepository.ViewPost(ctx, userID, postID)
+}
+
+func (u *PostUsecase) UpdateWaitingList(ctx context.Context, tx *sql.Tx, postID int, status string) error {
+	return u.postRepository.UpdateWaitingList(ctx, tx, postID, status)
 }

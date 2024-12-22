@@ -27,7 +27,7 @@ func (s *PostStore) CreatePost(ctx context.Context, tx *sql.Tx, post *domain.Pos
 	}
 	post.ID = int(id)
 	post.CreatedAt = time.Now()
-	err = s.CreateInteraction(ctx, tx, post.ID)
+	err = s.AddToWaitingList(ctx, tx, post.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func (s *PostStore) GetPosts(ctx context.Context) ([]*domain.Post, error) {
 	}
 	for rows.Next() {
 		var post domain.Post
-		err := rows.Scan(&post.ID, &post.Content, &post.UserID, &post.Status, &post.Image_url, &post.Likes_count, &post.Comments_count, &post.CreatedAt)
+		err := rows.Scan(&post.ID, &post.Content, &post.UserID, &post.Image_url, &post.Likes_count, &post.Comments_count, &post.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -73,7 +73,7 @@ func (s *PostStore) GetPostByID(ctx context.Context, id int) (*domain.Post, erro
 	query := "SELECT * FROM posts WHERE id=?"
 	row := s.db.QueryRowContext(ctx, query, id)
 	var post domain.Post
-	err := row.Scan(&post.ID, &post.Content, &post.UserID, &post.Status, &post.Image_url, &post.Likes_count, &post.Comments_count, &post.CreatedAt)
+	err := row.Scan(&post.ID, &post.Content, &post.UserID, &post.Image_url, &post.Likes_count, &post.Comments_count, &post.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func scanIntoList(rows *sql.Rows) ([]*domain.Post, error) {
 	defer rows.Close()
 	for rows.Next() {
 		var post domain.Post
-		err := rows.Scan(&post.ID, &post.Content, &post.UserID, &post.Status, &post.Image_url, &post.Likes_count, &post.Comments_count, &post.CreatedAt)
+		err := rows.Scan(&post.ID, &post.Content, &post.UserID, &post.Image_url, &post.Likes_count, &post.Comments_count, &post.CreatedAt)
 		if err != nil {
 			return nil, err
 		}

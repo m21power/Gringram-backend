@@ -18,12 +18,13 @@ func UserNewStore(db *sql.DB) *UserStore {
 }
 
 func (s *UserStore) CreateUser(ctx context.Context, user *domain.User) (*domain.User, error) {
-	query := "INSERT INTO users(name,username,email,password,bio,profile_url) VALUES(?,?,?,?,?,?)"
+	user.Role = "admin"
+	query := "INSERT INTO users(name,username,email,password,bio,profile_url,role) VALUES(?,?,?,?,?,?,?)"
 	hashedPassword, err := auth.HashedPassword(user.Password)
 	if err != nil {
 		return nil, err
 	}
-	res, err := s.db.ExecContext(ctx, query, user.Name, user.Username, user.Email, hashedPassword, user.Bio, user.ProfileImageUrl)
+	res, err := s.db.ExecContext(ctx, query, user.Name, user.Username, user.Email, hashedPassword, user.Bio, user.ProfileImageUrl, user.Role)
 	if err != nil {
 		return nil, err
 	}

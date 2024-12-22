@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/m21power/GrinGram/domain"
@@ -59,6 +60,7 @@ func (h *PostHandler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, map[string]*domain.Post{"post": p})
 
 }
+
 func (h *PostHandler) GetPosts(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	posts, err := h.postUsecase.GetPosts(ctx)
@@ -170,6 +172,41 @@ func (h *PostHandler) GetPostsByUserID(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, map[string][]*domain.Post{"posts": posts})
 
 }
+func (h *PostHandler) UpdateWaitingList(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	tx, err := h.postUsecase.BeginTransaction(ctx)
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+		}
+	}()
+	postId, err := utils.GetID(r)
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+	// err = json.NewDecoder(r.Body).Decode(&status)
+	status := r.URL.Query().Get("status")
+	if status == "" {
+		utils.WriteError(w, fmt.Errorf("status is required"))
+		return
+	}
+	err = h.postUsecase.UpdateWaitingList(ctx, tx, postId, status)
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+	utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "updated successfully"})
+}
 func (h *PostHandler) GetFeed(w http.ResponseWriter, r *http.Request) {
 	// later we take user id from our token
 	// for now lets take from the request
@@ -184,7 +221,7 @@ func (h *PostHandler) GetFeed(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, err)
 		return
 	}
-	utils.WriteJSON(w, http.StatusOK, map[string][]*domain.Post{"posts": unseenPost})
+	utils.WriteJSON(w, http.StatusOK, map[string]*domain.FeedPayload{"posts": unseenPost})
 }
 func toDomainPost(post types.PostPayload, url string) *domain.Post {
 	return &domain.Post{UserID: post.UserID, Content: post.Content, Image_url: url}

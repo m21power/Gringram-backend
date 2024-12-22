@@ -30,18 +30,29 @@ func (h *PostHandler) ViewPost(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (h *PostHandler) GetUnseenPost(ctx context.Context, userID int) ([]*domain.Post, error) {
-	postsID, err := h.postUsecase.GetUnseenPostID(ctx, userID)
+func (h *PostHandler) GetUnseenPost(ctx context.Context, userID int) (*domain.FeedPayload, error) {
+	result, err := h.postUsecase.GetUnseenPostID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 	var Posts []*domain.Post
-	for _, postID := range postsID {
+	for _, postID := range result[0] {
 		post, err := h.postUsecase.GetPostByID(ctx, postID)
 		if err != nil {
 			return nil, err
 		}
 		Posts = append(Posts, post)
 	}
-	return Posts, nil
+	var seenPost []*domain.Post
+	for _, postID := range result[1] {
+		post, err := h.postUsecase.GetPostByID(ctx, postID)
+		if err != nil {
+			return nil, err
+		}
+		seenPost = append(seenPost, post)
+	}
+	var ans domain.FeedPayload
+	ans.UnseenPost = Posts
+	ans.SeenPost = seenPost
+	return &ans, nil
 }

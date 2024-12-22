@@ -10,7 +10,6 @@ type Post struct {
 	ID             int       `json:"id" db:"id"`
 	Content        string    `json:"content" db:"content"`
 	UserID         int       `json:"user_id" db:"user_id"`
-	Status         string    `json:"status" db:"status"`
 	Image_url      string    `json:"image_url" db:"image_url"`
 	Likes_count    int       `json:"likes_count" db:"likes_count"`
 	Comments_count int       `json:"comments_count" db:"comments_count"`
@@ -20,6 +19,10 @@ type PostImage struct {
 	ID       int    `json:"id" db:"id"`
 	PostID   int    `json:"post_id" db:"post_id"`
 	ImageURL string `json:"image_url" db:"image_url"`
+}
+type FeedPayload struct {
+	UnseenPost []*Post `json:"unseen_post"`
+	SeenPost   []*Post `json:"seen_post"`
 }
 type PostRepository interface {
 	CreatePost(ctx context.Context, tx *sql.Tx, post *Post) (*Post, error)
@@ -44,6 +47,9 @@ type PostRepository interface {
 	GetLikers(ctx context.Context, postID int) ([]int, error)
 
 	// interaction
-	GetUnseenPostID(ctx context.Context, userID int) ([]int, error)
+	GetUnseenPostID(ctx context.Context, userID int) ([][]int, error)
 	ViewPost(ctx context.Context, userID int, postID int) error
+
+	//waitinglist
+	UpdateWaitingList(ctx context.Context, tx *sql.Tx, postId int, status string) error
 }
