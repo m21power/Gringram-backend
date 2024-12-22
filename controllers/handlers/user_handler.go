@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	auth "github.com/m21power/GrinGram/Auth"
 	"github.com/m21power/GrinGram/domain"
@@ -33,7 +34,54 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, err)
 		return
 	}
-	utils.WriteJSON(w, http.StatusOK, map[string]string{"token": token})
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "token", // Cookie name
+		Value:    token,   // Token as cookie value
+		Path:     "/",     // Path for which the cookie is valid
+		HttpOnly: true,    // Restrict access to HTTP(S) requests only
+		Secure:   true,    // Ensure cookie is sent over HTTPS
+		MaxAge:   3600 * 24 * 7,
+		SameSite: http.SameSiteStrictMode, // Protect against CSRF
+	})
+
+	utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "Login successful"})
+}
+func (h *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	// Remove the cookie by setting it with an expiration in the past
+	http.SetCookie(w, &http.Cookie{
+		Name:     "token",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		Expires:  time.Unix(0, 0), // Set expiration to a time in the past
+		MaxAge:   -1,              // MaxAge < 0 means delete the cookie
+	})
+
+	// Send a success response
+	utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "Logout successful"})
+
+}
+func (h *UserHandler) GetMe(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("token")
+	ctx := r.Context()
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+	token := cookie.Value
+	username, _, err := auth.GetUsernameAndRole(token)
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+	user, err := h.usecase.GetUserByUsername(ctx, username)
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+	utils.WriteJSON(w, http.StatusOK, user)
 }
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
