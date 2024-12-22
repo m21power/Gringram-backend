@@ -45,3 +45,6 @@ func (u *UserUsecase) GetProfileURL(ctx context.Context, tx *sql.Tx, id int) (st
 func (u *UserUsecase) BeginTransaction(ctx context.Context) (*sql.Tx, error) {
 	return u.userRepository.BeginTransaction(ctx)
 }
+func (u *UserUsecase) Login(ctx context.Context, login domain.LoginPayload) (string, error) {
+	return u.userRepository.Login(ctx, login)
+}

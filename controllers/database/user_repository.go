@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	auth "github.com/m21power/GrinGram/Auth"
@@ -74,8 +75,7 @@ func (s *UserStore) GetUserByUsername(ctx context.Context, username string) (*do
 }
 
 func (s *UserStore) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {
-	query := "SELECT id, name, username, COALESCE(bio, ''), password,role, email, profile_url,created_at FROM users WHERE email=?"
-
+	query := "SELECT id, name, username, COALESCE(bio, ''), password,role, email, COALESCE(profile_url, ''),created_at FROM users WHERE email=?"
 	row := s.db.QueryRowContext(ctx, query, email)
 	user := &domain.User{}
 	err := row.Scan(&user.ID, &user.Name, &user.Username, &user.Bio, &user.Password, &user.Role, &user.Email, &user.ProfileImageUrl, &user.CreatedAt)
@@ -140,4 +140,20 @@ func (s *UserStore) GetPostsID(ctx context.Context) ([]int, error) {
 		postsID = append(postsID, id)
 	}
 	return postsID, nil
+}
+
+func (s *UserStore) Login(ctx context.Context, login domain.LoginPayload) (string, error) {
+	user, err := s.GetUserByEmail(ctx, login.Email)
+	if err != nil {
+		return "", err
+	}
+	if !auth.ComparePassword(user.Password, login.Password) {
+		return "", fmt.Errorf("incorrect password")
+	}
+	// since the password match let's generate token
+	token, err := auth.GenerateToken(user.Username, user.Role)
+	if err != nil {
+		return "", err
+	}
+	return token, err
 }

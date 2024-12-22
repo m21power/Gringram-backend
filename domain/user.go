@@ -17,7 +17,10 @@ type User struct {
 	ProfileImageUrl string    `json:"image_url" db:"profile_image_url"` // optional
 	CreatedAt       time.Time `json:"created_at" db:"created_at"`
 }
-
+type LoginPayload struct {
+	Email    string `json:"email" db:"email"`
+	Password string `json:"password" db:"password"`
+}
 type UserRepository interface {
 	CreateUser(ctx context.Context, user *User) (*User, error)
 	GetUserByID(ctx context.Context, id int) (*User, error)
@@ -28,4 +31,5 @@ type UserRepository interface {
 	DeleteUserImage(ctx context.Context, tx *sql.Tx, id int) error
 	GetProfileURL(ctx context.Context, tx *sql.Tx, id int) (string, error)
 	BeginTransaction(ctx context.Context) (*sql.Tx, error)
+	Login(ctx context.Context, login LoginPayload) (string, error)
 }

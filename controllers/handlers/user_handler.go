@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"log"
+	"encoding/json"
 	"net/http"
 
 	auth "github.com/m21power/GrinGram/Auth"
@@ -20,7 +20,21 @@ func NewUserHandler(usecase *usecases.UserUsecase) *UserHandler {
 		usecase: usecase,
 	}
 }
-
+func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	var login domain.LoginPayload
+	err := json.NewDecoder(r.Body).Decode(&login)
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+	token, err := h.usecase.Login(ctx, login)
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+	utils.WriteJSON(w, http.StatusOK, map[string]string{"token": token})
+}
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	url, err := utils.GetProfileUrl(r)
@@ -65,7 +79,6 @@ func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) GetUserByEmail(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	email := r.URL.Query().Get("email")
-	log.Println(email)
 	if email == "" {
 		utils.WriteError(w, nil)
 		return

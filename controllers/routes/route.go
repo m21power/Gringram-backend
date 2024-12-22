@@ -28,8 +28,8 @@ func (r *Router) RegisterRoute() {
 	userStore := database.UserNewStore(db)
 	userUsecase := usecases.NewUserUsecase(userStore)
 	userHandler := handlers.NewUserHandler(userUsecase)
-
 	r.route.HandleFunc("/user", userHandler.CreateUser).Methods("POST")
+	r.route.HandleFunc("/user/login/", userHandler.Login).Methods("POST")
 	r.route.HandleFunc("/user/{id}", userHandler.GetUserByID).Methods("GET")
 	r.route.HandleFunc("/user/email/", userHandler.GetUserByEmail).Methods("GET")
 	r.route.HandleFunc("/user/username/", userHandler.GetUserByUsername).Methods("GET")
@@ -48,6 +48,15 @@ func (r *Router) RegisterRoute() {
 	r.route.HandleFunc("/user/post/user/{id}", postHandler.GetPostsByUserID).Methods("GET")
 	r.route.HandleFunc("/user/post/delete/{id}", postHandler.DeletePost).Methods("DELETE")
 	r.route.HandleFunc("/user/post/update/{id}", postHandler.UpdatePost).Methods("PUT")
+	// Secure routes with roleMiddleware
+
+	// r.route.Handle("/user", roleMiddleware("public")(http.HandlerFunc(userHandler.CreateUser))).Methods("POST")
+	// r.route.Handle("/user/{id}", roleMiddleware("user")(http.HandlerFunc(userHandler.GetUserByID))).Methods("GET")
+	// r.route.Handle("/user/email/", roleMiddleware("admin")(http.HandlerFunc(userHandler.GetUserByEmail))).Methods("GET")
+	// r.route.Handle("/user/username/", roleMiddleware("user")(http.HandlerFunc(userHandler.GetUserByUsername))).Methods("GET")
+	// r.route.Handle("/user/delete/{id}", roleMiddleware("admin")(http.HandlerFunc(userHandler.DeleteUser))).Methods("DELETE")
+	// r.route.Handle("/user/update/{id}", roleMiddleware("user")(http.HandlerFunc(userHandler.UpdateUser))).Methods("PUT")
+	// r.route.Handle("/user/image/{id}", roleMiddleware("user")(http.HandlerFunc(userHandler.DeleteUserImage))).Methods("DELETE")
 
 	//comment route
 	r.route.HandleFunc("/user/post/comment", postHandler.CreateComment).Methods("POST")
