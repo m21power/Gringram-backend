@@ -19,7 +19,7 @@ func UserNewStore(db *sql.DB) *UserStore {
 }
 
 func (s *UserStore) CreateUser(ctx context.Context, user *domain.User) (*domain.User, error) {
-	user.Role = "admin"
+	user.Role = "user"
 	query := "INSERT INTO users(name,username,email,password,bio,profile_url,role) VALUES(?,?,?,?,?,?,?)"
 	hashedPassword, err := auth.HashedPassword(user.Password)
 	if err != nil {
