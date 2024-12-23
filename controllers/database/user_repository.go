@@ -35,19 +35,7 @@ func (s *UserStore) CreateUser(ctx context.Context, user *domain.User) (*domain.
 	}
 	user.ID = int(id)
 	user.CreatedAt = time.Now()
-
-	// post id
-	postsId, err := s.GetPostsID(ctx)
-	if err != nil {
-		return nil, err
-	}
-	// insert into interactions(user_id,post_id)
-	for _, postId := range postsId {
-		_, err := s.db.ExecContext(ctx, "INSERT INTO interactions(user_id,post_id) VALUES(?,?)", user.ID, postId)
-		if err != nil {
-			return nil, err
-		}
-	}
+	user.Password = hashedPassword
 	return user, nil
 }
 
@@ -151,7 +139,7 @@ func (s *UserStore) Login(ctx context.Context, login domain.LoginPayload) (strin
 		return "", fmt.Errorf("incorrect password")
 	}
 	// since the password match let's generate token
-	token, err := auth.GenerateToken(user.Username, user.Role)
+	token, err := auth.GenerateToken(user.Username, user.Role, user.ID)
 	if err != nil {
 		return "", err
 	}

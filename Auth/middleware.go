@@ -16,13 +16,13 @@ func RoleMiddleware(allowedRoles ...string) func(http.Handler) http.Handler {
 				return
 			}
 			token := cookie.Value
-			_, userRole, err := GetUsernameAndRole(token)
+			Token, err := GetTokenValues(token)
 			if err != nil {
 				utils.WriteError(w, err)
 				return
 			}
 			for _, role := range allowedRoles {
-				if userRole == role {
+				if Token.Role == role {
 					next.ServeHTTP(w, r)
 					return
 				}

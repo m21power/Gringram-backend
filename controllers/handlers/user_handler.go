@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -64,25 +65,25 @@ func (h *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
 
 }
 func (h *UserHandler) GetMe(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("token")
 	ctx := r.Context()
+	token, err := auth.GetTokens(r)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
 	}
-	token := cookie.Value
-	username, _, err := auth.GetUsernameAndRole(token)
+	Token, err := auth.GetTokenValues(token)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
 	}
-	user, err := h.usecase.GetUserByUsername(ctx, username)
+	user, err := h.usecase.GetUserByID(ctx, Token.UserID)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, user)
 }
+
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	url, err := utils.GetProfileUrl(r)
@@ -177,6 +178,11 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, err)
 		return
 	}
+	_, err = IsAllowed(r, id)
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
 	url, err := h.usecase.GetProfileURL(ctx, tx, id)
 	if err != nil {
 		utils.WriteError(w, err)
@@ -230,6 +236,11 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, err)
 		return
 	}
+	_, err = IsAllowed(r, id)
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
 	err = h.usecase.DeleteUser(ctx, id)
 	if err != nil {
 		utils.WriteError(w, err)
@@ -253,6 +264,11 @@ func (h *UserHandler) DeleteUserImage(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 	id, err := utils.GetID(r)
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+	_, err = IsAllowed(r, id)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -298,4 +314,19 @@ func updateFunc(oldUser *domain.User, newUser types.UserPayload, image_url strin
 
 	return oldUser
 
+}
+
+func IsAllowed(r *http.Request, userId int) (bool, error) {
+	token, err := auth.GetTokens(r)
+	if err != nil {
+		return false, err
+	}
+	Token, err := auth.GetTokenValues(token)
+	if err != nil {
+		return false, err
+	}
+	if Token.Role == "user" && Token.UserID != userId {
+		return false, fmt.Errorf("you are not allowed")
+	}
+	return true, nil
 }

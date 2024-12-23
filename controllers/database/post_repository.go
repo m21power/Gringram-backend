@@ -61,8 +61,13 @@ func (s *PostStore) UpdatePost(ctx context.Context, post *domain.Post) error {
 }
 
 func (s *PostStore) DeletePost(ctx context.Context, tx *sql.Tx, id int) error {
+	quer := "DELETE FROM waitinglist WHERE post_id=?"
+	_, err := tx.ExecContext(ctx, quer, id)
+	if err != nil {
+		return err
+	}
 	query := "DELETE FROM posts WHERE id=?"
-	_, err := tx.ExecContext(ctx, query, id)
+	_, err = tx.ExecContext(ctx, query, id)
 	if err != nil {
 		return err
 	}

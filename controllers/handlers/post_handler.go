@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	auth "github.com/m21power/GrinGram/Auth"
 	"github.com/m21power/GrinGram/domain"
 	"github.com/m21power/GrinGram/types"
 	"github.com/m21power/GrinGram/usecases"
@@ -35,8 +36,13 @@ func (h *PostHandler) CreatePost(w http.ResponseWriter, r *http.Request) {
 			tx.Commit()
 		}
 	}()
-	var post types.PostPayload
-	_, err = utils.GetPayload(w, r, &post)
+	userInfo, err := GetUserInfo(r)
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+	var postContent types.PostContent
+	_, err = utils.GetPayload(w, r, &postContent)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -46,11 +52,11 @@ func (h *PostHandler) CreatePost(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, err)
 		return
 	}
-	if url == "" && post.Content == "" {
+	if url == "" {
 		utils.WriteJSON(w, http.StatusAccepted, map[string]string{"message": "empty post!"})
 		return
 	}
-	up := toDomainPost(post, url)
+	up := toDomainPost(userInfo.UserID, postContent.Content, url)
 	p, err := h.postUsecase.CreatePost(ctx, tx, up)
 	if err != nil {
 		utils.DeleteImageFromCloud(r, url)
@@ -72,8 +78,8 @@ func (h *PostHandler) GetPosts(w http.ResponseWriter, r *http.Request) {
 }
 func (h *PostHandler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	var payload types.UpdatePostPayload
-	_, err := utils.GetPayload(w, r, &payload)
+	var postContent types.PostContent
+	_, err := utils.GetPayload(w, r, &postContent)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -93,10 +99,21 @@ func (h *PostHandler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, err)
 		return
 	}
+	// is he allowed get it's value from the token
+	Token, err := GetUserInfo(r)
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+	if Token.Role == "user" && oldPost.UserID != Token.UserID {
+		utils.WriteError(w, fmt.Errorf("you are not allowed to delete"))
+		return
+	}
+
 	if oldPost.Image_url != "" {
 		utils.DeleteImageFromCloud(r, oldPost.Image_url)
 	}
-	post := fromUpdateToDomainPost(payload, oldPost, url)
+	post := fromUpdateToDomainPost(postContent.Content, oldPost, url)
 	err = h.postUsecase.UpdatePost(ctx, post)
 	if err != nil {
 		utils.DeleteImageFromCloud(r, url)
@@ -135,11 +152,21 @@ func (h *PostHandler) DeletePost(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, err)
 		return
 	}
+	Token, err := GetUserInfo(r)
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+	if Token.Role == "user" && post.UserID != Token.UserID {
+		utils.WriteError(w, fmt.Errorf("you are not allowed to delete"))
+		return
+	}
 	err = h.postUsecase.DeletePost(ctx, tx, id)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
 	}
+
 	utils.DeleteImageFromCloud(r, post.Image_url)
 	utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "deleted successfully!"})
 }
@@ -223,15 +250,27 @@ func (h *PostHandler) GetFeed(w http.ResponseWriter, r *http.Request) {
 	}
 	utils.WriteJSON(w, http.StatusOK, map[string]*domain.FeedPayload{"posts": unseenPost})
 }
-func toDomainPost(post types.PostPayload, url string) *domain.Post {
-	return &domain.Post{UserID: post.UserID, Content: post.Content, Image_url: url}
+func toDomainPost(userId int, content string, url string) *domain.Post {
+	return &domain.Post{UserID: userId, Content: content, Image_url: url}
 }
-func fromUpdateToDomainPost(newPost types.UpdatePostPayload, oldPost *domain.Post, url string) *domain.Post {
-	if newPost.Content != "" {
-		oldPost.Content = newPost.Content
+func fromUpdateToDomainPost(content string, oldPost *domain.Post, url string) *domain.Post {
+	if content != "" {
+		oldPost.Content = content
 	}
 	if url != "" {
 		oldPost.Image_url = url
 	}
 	return oldPost
+}
+func GetUserInfo(r *http.Request) (*types.Token, error) {
+	token, err := auth.GetTokens(r)
+	if err != nil {
+		return nil, err
+	}
+	Token, err := auth.GetTokenValues(token)
+	if err != nil {
+		return nil, err
+	}
+
+	return Token, nil
 }
