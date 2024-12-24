@@ -22,26 +22,26 @@ func (h *PostHandler) CreateComment(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
 		return
 	}
 	var commentPayload domain.Comment
 	err = json.NewDecoder(r.Body).Decode(&commentPayload)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
 		return
 	}
 	comment, err := h.postUsecase.CreateComment(ctx, tx, &commentPayload)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
 		return
 	}
 	err = h.postUsecase.IncrementCommentCount(ctx, comment.PostID)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
 		return
 	}
-	utils.WriteJSON(w, http.StatusCreated, map[string]domain.Comment{"comment": *comment})
+	utils.WriteJSON(w, http.StatusCreated, utils.ApiResponse{Message: "comment found", Success: true, Data: comment})
 
 }
 func (h *PostHandler) UpdateComment(w http.ResponseWriter, r *http.Request) {
@@ -52,17 +52,17 @@ func (h *PostHandler) UpdateComment(w http.ResponseWriter, r *http.Request) {
 	var payload Payload
 	err := json.NewDecoder(r.Body).Decode(&payload)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
 		return
 	}
 	id, err := utils.GetID(r)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
 		return
 	}
 	oldComment, err := h.postUsecase.GetCommentByID(ctx, id)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
 		return
 	}
 	if payload.Text != "" {
@@ -70,25 +70,25 @@ func (h *PostHandler) UpdateComment(w http.ResponseWriter, r *http.Request) {
 	}
 	err = h.postUsecase.UpdateComment(ctx, oldComment)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
 		return
 	}
-	utils.WriteJSON(w, http.StatusOK, map[string]domain.Comment{"comment": *oldComment})
+	utils.WriteJSON(w, http.StatusOK, utils.ApiResponse{Message: "comment updated", Success: true, Data: oldComment})
 
 }
 func (h *PostHandler) GetCommentByID(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id, err := utils.GetID(r)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
 		return
 	}
 	comment, err := h.postUsecase.GetCommentByID(ctx, id)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
 		return
 	}
-	utils.WriteJSON(w, http.StatusOK, map[string]domain.Comment{"comment": *comment})
+	utils.WriteJSON(w, http.StatusOK, utils.ApiResponse{Message: "comment found", Success: true, Data: comment})
 }
 func (h *PostHandler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -104,28 +104,28 @@ func (h *PostHandler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
 		return
 	}
 	id, err := utils.GetID(r)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
 		return
 	}
 	comment, err := h.postUsecase.GetCommentByID(ctx, id)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
 		return
 	}
 	err = h.postUsecase.DecrementCommentCount(ctx, comment.PostID, id)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
 		return
 	}
 	err = h.postUsecase.DeleteComment(ctx, tx, id)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
 		return
 	}
-	utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "comment deleted successfully!"})
+	utils.WriteJSON(w, http.StatusOK, utils.ApiResponse{Message: "comment deleted successfully", Success: true})
 }

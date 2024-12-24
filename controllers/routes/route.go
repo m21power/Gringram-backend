@@ -9,7 +9,9 @@ import (
 	"github.com/m21power/GrinGram/controllers/database"
 	"github.com/m21power/GrinGram/controllers/handlers"
 	"github.com/m21power/GrinGram/db"
+	_ "github.com/m21power/GrinGram/docs"
 	"github.com/m21power/GrinGram/usecases"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 type Router struct {
@@ -23,55 +25,60 @@ func NewRouter(r *mux.Router) *Router {
 func (r *Router) RegisterRoute() {
 	db, err := db.ConnectDB()
 	if err != nil {
-		log.Println("Can't connect to the databse!")
+		log.Println("Can't connect to the database!")
 		return
 	}
+	// Swagger route
+	r.route.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
+
+	// Initialize dependencies
 	userStore := database.UserNewStore(db)
 	userUsecase := usecases.NewUserUsecase(userStore)
 	userHandler := handlers.NewUserHandler(userUsecase)
 
-	r.route.Handle("/user/signup", http.HandlerFunc(userHandler.CreateUser)).Methods("POST")
-	r.route.Handle("/user/login", http.HandlerFunc(userHandler.Login)).Methods("POST")
-	r.route.Handle("/user/getme", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(userHandler.GetMe))).Methods("GET")
-	r.route.Handle("/user/logout", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(userHandler.Logout))).Methods("POST")
-
-	r.route.Handle("/user/{id}", auth.RoleMiddleware("admin")(http.HandlerFunc(userHandler.GetUserByID))).Methods("GET")
-	r.route.Handle("/user/email/", auth.RoleMiddleware("admin")(http.HandlerFunc(userHandler.GetUserByEmail))).Methods("GET")
-	r.route.Handle("/user/username/", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(userHandler.GetUserByUsername))).Methods("GET")
-
-	//1
-	r.route.Handle("/user/delete/{id}", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(userHandler.DeleteUser))).Methods("DELETE")
-	r.route.Handle("/user/update/{id}", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(userHandler.UpdateUser))).Methods("PUT")
-	r.route.Handle("/user/image/{id}", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(userHandler.DeleteUserImage))).Methods("DELETE")
-
-	// post route
 	postStore := database.NewPostStore(db)
 	postUsecase := usecases.NewPostRepository(postStore)
 	postHandler := handlers.NewPostHandler(postUsecase)
 
-	r.route.Handle("/user/post", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(postHandler.CreatePost))).Methods("POST")
-	r.route.Handle("/user/post/{id}", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(postHandler.GetPostByID))).Methods("GET")
-	r.route.Handle("/user/posts/", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(postHandler.GetPosts))).Methods("GET")
-	r.route.Handle("/user/post/user/{id}", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(postHandler.GetPostsByUserID))).Methods("GET")
+	// User Routes
+	userRoutes := r.route.PathPrefix("/api/v1").Subrouter()
+	userRoutes.Handle("/signup", http.HandlerFunc(userHandler.CreateUser)).Methods("POST")
+	userRoutes.Handle("/login", http.HandlerFunc(userHandler.Login)).Methods("POST")
+	userRoutes.Handle("/users/me", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(userHandler.GetMe))).Methods("GET")
+	userRoutes.Handle("/users/logout", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(userHandler.Logout))).Methods("POST")
+	userRoutes.Handle("/users/{id}", auth.RoleMiddleware("admin")(http.HandlerFunc(userHandler.GetUserByID))).Methods("GET")
+	userRoutes.Handle("/users/email/{email}", auth.RoleMiddleware("admin")(http.HandlerFunc(userHandler.GetUserByEmail))).Methods("GET")
+	userRoutes.Handle("/users/username/{username}", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(userHandler.GetUserByUsername))).Methods("GET")
+	userRoutes.Handle("/users/delete/{id}", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(userHandler.DeleteUser))).Methods("DELETE")
+	userRoutes.Handle("/users/{id}", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(userHandler.UpdateUser))).Methods("PUT")
+	userRoutes.Handle("/users/image/{id}", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(userHandler.DeleteUserImage))).Methods("DELETE")
 
-	//2
-	r.route.Handle("/user/post/delete/{id}", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(postHandler.DeletePost))).Methods("DELETE")
-	r.route.Handle("/user/post/update/{id}", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(postHandler.UpdatePost))).Methods("PUT")
+	// Post Routes
+	postRoutes := r.route.PathPrefix("/api/v1").Subrouter()
+	postRoutes.Handle("/posts", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(postHandler.CreatePost))).Methods("POST")
+	postRoutes.Handle("/posts/{id}", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(postHandler.GetPostByID))).Methods("GET")
+	postRoutes.Handle("/posts", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(postHandler.GetPosts))).Methods("GET")
+	postRoutes.Handle("/posts/user/{id}", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(postHandler.GetPostsByUserID))).Methods("GET")
+	postRoutes.Handle("/posts/{id}", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(postHandler.DeletePost))).Methods("DELETE")
+	postRoutes.Handle("/posts/{id}", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(postHandler.UpdatePost))).Methods("PUT")
 
-	//comment route
-	r.route.Handle("/user/post/comment", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(postHandler.CreateComment))).Methods("POST")
-	r.route.Handle("/user/post/comment/{id}", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(postHandler.GetCommentByID))).Methods("GET")
-	//3
-	r.route.Handle("/user/post/comment/update/{id}", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(postHandler.UpdateComment))).Methods("PUT")
-	r.route.Handle("/user/post/comment/delete/{id}", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(postHandler.DeleteComment))).Methods("DELETE")
-	//like route
-	r.route.Handle("/user/post/like", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(postHandler.MakeLike))).Methods("POST")
-	r.route.Handle("/user/post/like/{id}", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(postHandler.GetLikers))).Methods("GET")
+	// Comment Routes
+	commentRoutes := r.route.PathPrefix("/api/v1").Subrouter()
+	commentRoutes.Handle("/comments", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(postHandler.CreateComment))).Methods("POST")
+	commentRoutes.Handle("/comments/{id}", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(postHandler.GetCommentByID))).Methods("GET")
+	commentRoutes.Handle("/comments/{id}", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(postHandler.UpdateComment))).Methods("PUT")
+	commentRoutes.Handle("/comments/{id}", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(postHandler.DeleteComment))).Methods("DELETE")
 
-	// interaction
-	r.route.Handle("/user/post/feed/{id}", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(postHandler.GetFeed))).Methods("GET")
-	r.route.Handle("/user/post/view/", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(postHandler.ViewPost))).Methods("POST")
-	r.route.Handle("/user/post/waiting/{id}", auth.RoleMiddleware("admin")(http.HandlerFunc(postHandler.UpdateWaitingList))).Methods("PUT")
+	// Like Routes
+	likeRoutes := r.route.PathPrefix("/api/v1").Subrouter()
+	likeRoutes.Handle("/likes", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(postHandler.MakeLike))).Methods("POST")
+	likeRoutes.Handle("/likes/{id}", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(postHandler.GetLikers))).Methods("GET")
+
+	// Interaction Routes
+	interactionRoutes := r.route.PathPrefix("/api/v1").Subrouter()
+	interactionRoutes.Handle("/posts/interactions/feed", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(postHandler.GetFeed))).Methods("GET")
+	interactionRoutes.Handle("/posts/interactions/view", auth.RoleMiddleware("admin", "user")(http.HandlerFunc(postHandler.ViewPost))).Methods("POST")
+	interactionRoutes.Handle("/posts/interactions/waiting/{id}", auth.RoleMiddleware("admin")(http.HandlerFunc(postHandler.UpdateWaitingList))).Methods("PUT")
 }
 
 func (r *Router) Run(addr string, router *mux.Router) error {

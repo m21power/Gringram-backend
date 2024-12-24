@@ -18,15 +18,15 @@ func (h *PostHandler) ViewPost(w http.ResponseWriter, r *http.Request) {
 	var payload ViewPayload
 	err := json.NewDecoder(r.Body).Decode(&payload)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
 		return
 	}
 	err = h.postUsecase.ViewPost(ctx, payload.UserID, payload.PostID)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
 		return
 	}
-	utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "seen"})
+	utils.WriteJSON(w, http.StatusOK, utils.ApiResponse{Message: "seen", Success: true})
 
 }
 

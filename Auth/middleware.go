@@ -12,13 +12,13 @@ func RoleMiddleware(allowedRoles ...string) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			cookie, err := r.Cookie("token")
 			if err != nil {
-				utils.WriteError(w, err)
+				utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
 				return
 			}
 			token := cookie.Value
 			Token, err := GetTokenValues(token)
 			if err != nil {
-				utils.WriteError(w, err)
+				utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
 				return
 			}
 			for _, role := range allowedRoles {

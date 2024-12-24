@@ -16,14 +16,14 @@ func WriteJSON(w http.ResponseWriter, status int, payload any) {
 	json.NewEncoder(w).Encode(payload)
 }
 
-func WriteError(w http.ResponseWriter, err error) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusBadRequest)
-	response := map[string]string{
-		"error": err.Error(),
-	}
-	json.NewEncoder(w).Encode(response)
-}
+// func WriteError(w http.ResponseWriter, err error) {
+// 	w.Header().Set("Content-Type", "application/json")
+// 	w.WriteHeader(http.StatusBadRequest)
+// 	response := map[string]string{
+// 		"error": err.Error(),
+// 	}
+// 	json.NewEncoder(w).Encode(response)
+// }
 
 func PayloadToDomainUser(payload types.UserPayload) *domain.User {
 	return &domain.User{
@@ -42,4 +42,21 @@ func GetID(r *http.Request) (int, error) {
 		return -1, err
 	}
 	return id, nil
+}
+
+type ErrorResponse struct {
+	Err error `json:"error"`
+}
+
+type DeleteResponse struct {
+	Message string `json:"message"`
+}
+type SuccessReponse struct {
+	Message string `json:"message"`
+}
+
+type ApiResponse struct {
+	Message string `json:"message"`
+	Success bool   `json:"success"`
+	Data    any    `json:"data"`
 }

@@ -23,7 +23,8 @@ func (h *PostHandler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	tx, err := h.postUsecase.BeginTransaction(ctx)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
+
 		return
 	}
 	defer func() {
@@ -38,18 +39,18 @@ func (h *PostHandler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	}()
 	userInfo, err := GetUserInfo(r)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
 		return
 	}
 	var postContent types.PostContent
 	_, err = utils.GetPayload(w, r, &postContent)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
 		return
 	}
 	url, err := utils.GetPostImageURL(r)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
 		return
 	}
 	if url == "" {
@@ -60,10 +61,11 @@ func (h *PostHandler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	p, err := h.postUsecase.CreatePost(ctx, tx, up)
 	if err != nil {
 		utils.DeleteImageFromCloud(r, url)
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
+
 		return
 	}
-	utils.WriteJSON(w, http.StatusOK, map[string]*domain.Post{"post": p})
+	utils.WriteJSON(w, http.StatusOK, utils.ApiResponse{Message: "post created successfully", Success: true, Data: p})
 
 }
 
@@ -71,7 +73,7 @@ func (h *PostHandler) GetPosts(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	posts, err := h.postUsecase.GetPosts(ctx)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, map[string][]*domain.Post{"posts": posts})
@@ -81,32 +83,32 @@ func (h *PostHandler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 	var postContent types.PostContent
 	_, err := utils.GetPayload(w, r, &postContent)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
 		return
 	}
 	url, err := utils.GetPostImageURL(r)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
 		return
 	}
 	id, err := utils.GetID(r)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
 		return
 	}
 	oldPost, err := h.postUsecase.GetPostByID(ctx, id)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
 		return
 	}
 	// is he allowed get it's value from the token
 	Token, err := GetUserInfo(r)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
 		return
 	}
 	if Token.Role == "user" && oldPost.UserID != Token.UserID {
-		utils.WriteError(w, fmt.Errorf("you are not allowed to delete"))
+		utils.WriteJSON(w, http.StatusUnauthorized, utils.ApiResponse{Message: fmt.Errorf("you are not allowed to delete").Error(), Success: false})
 		return
 	}
 
@@ -117,10 +119,11 @@ func (h *PostHandler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 	err = h.postUsecase.UpdatePost(ctx, post)
 	if err != nil {
 		utils.DeleteImageFromCloud(r, url)
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
+
 		return
 	}
-	utils.WriteJSON(w, http.StatusOK, post)
+	utils.WriteJSON(w, http.StatusOK, utils.ApiResponse{Message: "updated successfully", Success: true, Data: post})
 
 }
 func (h *PostHandler) DeletePost(w http.ResponseWriter, r *http.Request) {
@@ -129,7 +132,8 @@ func (h *PostHandler) DeletePost(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	tx, err := h.postUsecase.BeginTransaction(ctx)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
+
 		return
 	}
 	defer func() {
@@ -144,66 +148,75 @@ func (h *PostHandler) DeletePost(w http.ResponseWriter, r *http.Request) {
 	}()
 	id, err := utils.GetID(r)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
+
 		return
 	}
 	post, err := h.postUsecase.GetPostByID(ctx, id)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
+
 		return
 	}
 	Token, err := GetUserInfo(r)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
+
 		return
 	}
 	if Token.Role == "user" && post.UserID != Token.UserID {
-		utils.WriteError(w, fmt.Errorf("you are not allowed to delete"))
+		utils.WriteJSON(w, http.StatusUnauthorized, utils.ApiResponse{Message: fmt.Errorf("you are not allowed to delete").Error(), Success: false})
 		return
 	}
 	err = h.postUsecase.DeletePost(ctx, tx, id)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
+
 		return
 	}
 
 	utils.DeleteImageFromCloud(r, post.Image_url)
-	utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "deleted successfully!"})
+	utils.WriteJSON(w, http.StatusOK, utils.ApiResponse{Message: "deleted successfully", Success: true})
 }
 func (h *PostHandler) GetPostByID(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id, err := utils.GetID(r)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
+
 		return
 	}
 	post, err := h.postUsecase.GetPostByID(ctx, id)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
+
 		return
 	}
-	utils.WriteJSON(w, http.StatusOK, map[string]*domain.Post{"post": post})
+	utils.WriteJSON(w, http.StatusOK, utils.ApiResponse{Message: "post found", Success: true, Data: post})
 }
 func (h *PostHandler) GetPostsByUserID(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, err := utils.GetID(r)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
+
 		return
 	}
 	posts, err := h.postUsecase.GetPostsByUserID(ctx, userID)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
+
 		return
 	}
-	utils.WriteJSON(w, http.StatusOK, map[string][]*domain.Post{"posts": posts})
+	utils.WriteJSON(w, http.StatusOK, utils.ApiResponse{Message: "posts found", Success: true, Data: posts})
 
 }
 func (h *PostHandler) UpdateWaitingList(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	tx, err := h.postUsecase.BeginTransaction(ctx)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
+
 		return
 	}
 	defer func() {
@@ -218,37 +231,40 @@ func (h *PostHandler) UpdateWaitingList(w http.ResponseWriter, r *http.Request) 
 	}()
 	postId, err := utils.GetID(r)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
 		return
 	}
 	// err = json.NewDecoder(r.Body).Decode(&status)
 	status := r.URL.Query().Get("status")
 	if status == "" {
-		utils.WriteError(w, fmt.Errorf("status is required"))
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: fmt.Errorf("status is required").Error(), Success: false})
 		return
 	}
 	err = h.postUsecase.UpdateWaitingList(ctx, tx, postId, status)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
+
 		return
 	}
-	utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "updated successfully"})
+	utils.WriteJSON(w, http.StatusOK, utils.ApiResponse{Message: "updated successfully", Success: true})
 }
 func (h *PostHandler) GetFeed(w http.ResponseWriter, r *http.Request) {
 	// later we take user id from our token
 	// for now lets take from the request
 	ctx := r.Context()
-	userId, err := utils.GetID(r)
+	Token, err := GetUserInfo(r)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
+
 		return
 	}
-	unseenPost, err := h.GetUnseenPost(ctx, userId)
+	unseenPost, err := h.GetUnseenPost(ctx, Token.UserID)
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ApiResponse{Message: err.Error(), Success: false})
+
 		return
 	}
-	utils.WriteJSON(w, http.StatusOK, map[string]*domain.FeedPayload{"posts": unseenPost})
+	utils.WriteJSON(w, http.StatusOK, utils.ApiResponse{Message: "feed found", Success: true, Data: unseenPost})
 }
 func toDomainPost(userId int, content string, url string) *domain.Post {
 	return &domain.Post{UserID: userId, Content: content, Image_url: url}
